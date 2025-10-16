@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Our Work — Reno Riser Construction</title>
+    <meta name="description" content="Explore recent renovation projects by location: Hamilton and Burlington." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="icon" href="images/logo.png" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17649734991"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);} // eslint-disable-line
+      gtag('js', new Date());
+      gtag('config', 'AW-17649734991');
+    </script>
+  </head>
+  <body class="work-page">
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="./">
+          <img src="images/logo.png" alt="Reno Riser Construction" onerror="this.style.display='none'; this.parentElement.querySelector('.brand-name').style.display='inline-block'"/>
+          <span class="brand-name">Reno Riser Construction</span>
+        </a>
+        <nav class="nav">
+          <a href="index.html#services">Services</a>
+          <a class="active" href="#">Our Work</a>
+          <a href="index.html#snow">Snow Plans</a>
+          <a href="index.html#contact" class="btn btn-primary btn-small">Get a Quote</a>
+        </nav>
+        <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="section hero-slim">
+        <div class="container">
+          <h1>Our Work</h1>
+          <p>Browse projects by location. We currently feature two jobs in Hamilton and one in Burlington.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="section-head">
+            <h2>Projects by Location</h2>
+            <p>Click a card to open the gallery for that location.</p>
+          </div>
+          <div class="cards loc-cards" id="locCards"></div>
+          <div class="section-head" id="locHead" style="display:none; margin-top:1.4rem;">
+            <h3 id="locTitle">Location Gallery</h3>
+          </div>
+          <div class="gallery" id="locGallery"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="brandline">
+          <img src="images/logo.png" alt="Reno Riser Construction" onerror="this.style.display='none'" />
+          <span>Reno Riser Construction</span>
+        </div>
+        <div class="footer-links">
+          <a href="./">Home</a>
+          <a href="index.html#services">Services</a>
+          <a href="index.html#contact">Contact</a>
+        </div>
+        <div class="copyright">&copy; <span id="year"></span> Reno Riser Construction. All rights reserved.</div>
+      </div>
+    </footer>
+
+    <!-- Lightbox Modal -->
+    <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog">
+      <button class="lightbox-close" id="lightboxClose" aria-label="Close">×</button>
+      <div class="lightbox-content" id="lightboxContent"></div>
+      <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+  </body>
+  </html>

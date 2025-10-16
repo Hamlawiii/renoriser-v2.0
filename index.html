@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reno Riser</title>
+    <meta name="description" content="Reno Riser  Snow removal, kitchen cabinets, bathroom renovations, basement finishing, flooring & painting." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link rel="icon" href="images/logo.png" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17649734991"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);} // eslint-disable-line
+      gtag('js', new Date());
+      gtag('config', 'AW-17649734991');
+    </script>
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <div class="container header-inner">
+        <a class="brand" href="./">
+          <img src="images/logo.png" alt="Reno Riser Construction" onerror="this.style.display='none'; this.parentElement.querySelector('.brand-name').style.display='inline-block'"/>
+          <span class="brand-name">Reno Riser</span>
+        </a>
+        <nav class="nav">
+          <a href="#services">Services</a>
+          <a href="work.html">Our Work</a>
+          <a href="#snow">Snow Plans</a>
+          <a href="#contact" class="btn btn-primary btn-small">Get a Quote</a>
+        </nav>
+        <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-media">
+          <video class="hero-video" autoplay muted playsinline loop poster="images/hero.jpg">
+            <source src="videos/3.mp4" type="video/mp4" />
+          </video>
+          <div class="hero-overlay"></div>
+        </div>
+        <div class="container hero-content">
+          <h1>Better Renovations. Better Living.</h1>
+          <p>Renovations and seasonal services done right kitchens, bathrooms, basements, flooring & painting, plus dependable snow removal.</p>
+          <div class="hero-ctas">
+            <a href="#services" class="btn btn-primary">Explore Services</a>
+            <a href="work.html" class="btn btn-ghost">See Our Work</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trust bar / highlights -->
+      <section class="highlights">
+        <div class="container highlights-grid">
+          <div class="highlight"><img class="h-img" src="images/construction.png" alt="Construction"/><span>Full-service renovations</span></div>
+          <div class="highlight"><img class="h-img" src="images/snow.png" alt="Snow"/><span>Reliable snow removal</span></div>
+          <div class="highlight"><img class="h-img" src="images/add.png" alt="Schedule"/><span>On-time, on-budget</span></div>
+          <div class="highlight"><img class="h-img" src="images/paint.png" alt="Quality"/><span>Quality craftsmanship</span></div>
+        </div>
+      </section>
+
+      <!-- Services -->
+      <section class="section" id="services">
+        <div class="container">
+          <div class="section-head">
+            <h2>Services</h2>
+            <p>Select a service to get an instant tailored quote flow.</p>
+          </div>
+          <div class="cards services-grid">
+            <article class="card service-card" data-service="snow">
+              <div class="icon"><img class="svc-img" src="images/snow.png" alt="Snow removal"/></div>
+              <h3>Snow Removal</h3>
+              <p>Plans for driveways, homes, and commercial properties. Priority options available.</p>
+              <button class="btn btn-primary svc-open">See Packages</button>
+            </article>
+            <article class="card service-card" data-service="kitchen">
+              <div class="icon"><img class="svc-img" src="images/kitchen.png" alt="Kitchen"/></div>
+              <h3>Kitchen Cabinet Installation</h3>
+              <p>Precision install for stock or custom cabinets, islands, and trim.</p>
+              <button class="btn svc-open">Get Started</button>
+            </article>
+            <article class="card service-card" data-service="bathroom">
+              <div class="icon"><img class="svc-img" src="images/bath.png" alt="Bathroom"/></div>
+              <h3>Bathroom Renovations</h3>
+              <p>From powder rooms to spa-grade ensuites with tile, fixtures, and glass.</p>
+              <button class="btn svc-open">Get Started</button>
+            </article>
+            <article class="card service-card" data-service="basement">
+              <div class="icon"><img class="svc-img" src="images/basement.png" alt="Basement"/></div>
+              <h3>Basement Finishing</h3>
+              <p>Maximize your space: suites, gyms, media rooms, storage, and more.</p>
+              <button class="btn svc-open">Get Started</button>
+            </article>
+            <article class="card service-card" data-service="flooring">
+              <div class="icon"><img class="svc-img" src="images/paint.png" alt="Flooring & painting"/></div>
+              <h3>Flooring & Painting</h3>
+              <p>Durable floors and flawless paint for a fresh, cohesive look.</p>
+              <button class="btn svc-open">Get Started</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Snow Plans (anchor) -->
+      <section class="section alt" id="snow">
+        <div class="container">
+          <div class="section-head">
+            <h2>Snow Removal Plans</h2>
+            <p>Choose a plan that fits your property and budget. Add priority service or refreeze monitoring for extra peace of mind.</p>
+          </div>
+          <div class="cards plans-grid" id="snowPlansGrid"></div>
+          <div class="plan-note">Prices shown are typical; final quotes depend on address, driveway size, and add-ons.</div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="section">
+        <div class="container about-split">
+          <div class="about-copy">
+            <h2>Craftsmanship. Communication. Care.</h2>
+            <p>We pair skilled trades with clear timelines and proactive updates. Whether you need a dream kitchen, a finished basement, or a dependable winter plan � we deliver quality without hassle.</p>
+            <ul class="checks">
+              <li>Transparent pricing</li>
+              <li>Respectful of your home</li>
+              <li>Local, trusted, and responsive</li>
+            </ul>
+          </div>
+          <div class="about-media">
+            <img src="images/about.png" alt="Team working on a renovation" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section class="section contact" id="contact">
+        <div class="container contact-grid">
+          <div class="contact-copy">
+            <h2>Get Your Quote</h2>
+            <p>Tell us about your project or snow plan and we&rsquo;ll respond quickly with next steps.</p>
+            <div class="contact-cta">
+              <div class="mini">Prefer phone or email?</div>
+              <div class="mini"><strong>Call:</strong> <a href="tel:+13654769000">3654769000</a></div>
+              <div class="mini"><strong>Email:</strong> <a href="mailto:renoriser@outlook.com">renoriser@outlook.com</a></div>
+            </div>
+          </div>
+          <form class="contact-form" id="contactForm" action="#" method="post" onsubmit="return window.App.handleContactSubmit(event)">
+            <input type="hidden" name="serviceDetails" id="serviceDetails" />
+            <label>
+              <span>Full Name</span>
+              <input type="text" name="name" placeholder="Jane Doe" required />
+            </label>
+            <label>
+              <span>Email</span>
+              <input type="email" name="email" placeholder="jane@example.com" required />
+            </label>
+            <label>
+              <span>Phone</span>
+              <input type="tel" name="phone" placeholder="(365) 476-9000" />
+            </label>
+            <label>
+              <span>Address (for snow quotes)</span>
+              <input type="text" name="address" placeholder="123 Main St, City" />
+            </label>
+            <label class="full">
+              <span>Project Details</span>
+              <textarea name="message" rows="5" placeholder="Tell us about your project"></textarea>
+            </label>
+            <button type="submit" class="btn btn-primary">Request Quote</button>
+            <div id="formStatus" class="form-status" role="status" aria-live="polite"></div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div class="brandline">
+          <img src="images/logo.png" alt="Reno Riser Construction" onerror="this.style.display='none'" />
+          <span>Reno Riser Construction</span>
+        </div>
+        <div class="footer-links">
+          <a href="#top">Top</a>
+          <a href="work.html">Our Work</a>
+          <a href="#services">Services</a>
+          <a href="#contact">Contact</a>
+        </div>
+        <div class="copyright">&copy; <span id="year"></span> Reno Riser Construction. All rights reserved.</div>
+      </div>
+    </footer>
+
+    <!-- Interactive Drawer / Modal -->
+    <div class="drawer" id="svcDrawer" aria-hidden="true" aria-labelledby="svcTitle" role="dialog">
+      <div class="drawer-panel" role="document">
+        <button class="drawer-close" aria-label="Close" id="svcClose">�</button>
+        <div class="drawer-header">
+          <h3 id="svcTitle">Service</h3>
+          <p id="svcSubtitle">Tell us a bit more so we can tailor your quote.</p>
+        </div>
+        <div class="drawer-content" id="svcContent"></div>
+        <div class="drawer-footer">
+          <button class="btn btn-ghost" id="svcBack" hidden>Back</button>
+          <button class="btn btn-primary" id="svcNext">Continue</button>
+        </div>
+      </div>
+      <div class="drawer-backdrop" id="svcBackdrop"></div>
+    </div>
+
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>
