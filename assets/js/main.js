@@ -1,8 +1,17 @@
 /* Reno Riser Construction — Interactive logic */
-(function(){
-  const $ = (sel, el=document) => el.querySelector(sel);
-  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+(function () {
+  'use strict';
 
+  const $ = (sel, el = document) => el.querySelector(sel);
+  const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+
+  // ── Constants ─────────────────────────────────────────────────────────────
+  // Get a free key at https://web3forms.com — takes 30 seconds, no account needed
+  const WEB3FORMS_KEY = '360776cf-4e34-4f90-9bf5-f830ad11b832';
+  const MANIFEST_URL = 'images/manifest.json';
+  const LOC_LABELS = { H: 'Hamilton', T: 'Hamilton', B: 'Burlington' };
+
+  // ── State ─────────────────────────────────────────────────────────────────
   const state = {
     drawerOpen: false,
     step: 0,
@@ -10,764 +19,725 @@
     data: {},
   };
 
+  // ── Analytics helper ──────────────────────────────────────────────────────
+  const track = (name, params = {}) => {
+    if (typeof gtag === 'function') gtag('event', name, params);
+  };
+
+  // ── App ───────────────────────────────────────────────────────────────────
   const App = {
-    init(){
+    init() {
       this.header();
       this.footerYear();
       this.navMenu();
-      this.gallery();
-      this.locations();
-      this.lightbox();
       this.drawer();
       this.snowPlans();
-      window.App = this; // expose for form handler
+      this.contactForm();
+      this.locations();
+      this.lightbox();
+      window.App = this;
     },
 
-    header(){
-      let lastY = 0; const hdr = $('.site-header');
+    // ── Header scroll effect ─────────────────────────────────────────────
+
+    header() {
+      const hdr = $('.site-header');
+      if (!hdr) return;
       window.addEventListener('scroll', () => {
-        const y = window.scrollY;
-        hdr.style.boxShadow = y>2 ? '0 2px 16px rgba(0,0,0,0.25)' : 'none';
-        hdr.style.background = y>2 ? 'rgba(13,15,18,0.7)' : 'rgba(13,15,18,0.6)';
-        lastY = y;
-      });
+        const scrolled = window.scrollY > 2;
+        hdr.style.boxShadow = scrolled ? '0 2px 16px rgba(0,0,0,0.25)' : 'none';
+        hdr.style.background = scrolled
+          ? 'rgba(13,15,18,0.85)'
+          : 'rgba(13,15,18,0.6)';
+      }, { passive: true });
     },
 
-    footerYear(){
+    footerYear() {
       const y = new Date().getFullYear();
-      $$('#year').forEach(el => el.textContent = y);
+      $$('#year').forEach(el => (el.textContent = y));
     },
 
-    navMenu(){
+    // ── Mobile nav ───────────────────────────────────────────────────────
+
+    navMenu() {
       const btn = $('.nav-toggle');
       const nav = $('.nav');
-      if(!btn || !nav) return;
-      btn.addEventListener('click', ()=>{
+      if (!btn || !nav) return;
+      btn.addEventListener('click', () => {
         const open = nav.classList.toggle('open');
         btn.setAttribute('aria-expanded', String(open));
       });
-      nav.addEventListener('click', (e)=>{
-        if(e.target.tagName==='A') nav.classList.remove('open');
+      nav.addEventListener('click', e => {
+        if (e.target.tagName === 'A') {
+          nav.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      // Close nav on outside click
+      document.addEventListener('click', e => {
+        if (nav.classList.contains('open') && !nav.contains(e.target) && e.target !== btn) {
+          nav.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
       });
     },
 
-    /* Drawer / Service flow */
-    drawer(){
+    // ── Service Drawer ────────────────────────────────────────────────────
+
+    drawer() {
       const drawer = $('#svcDrawer');
-      const openers = $$('.svc-open');
+      if (!drawer) return;
+
       const closeBtn = $('#svcClose');
       const backdrop = $('#svcBackdrop');
       const nextBtn = $('#svcNext');
       const backBtn = $('#svcBack');
 
-      const open = (service) => {
-        state.drawerOpen = true; state.step = 0; state.data = {}; state.service = service;
+      const open = (service, initialData = {}) => {
+        state.drawerOpen = true;
+        state.step = 0;
+        state.data = { ...initialData };
+        state.service = service;
         drawer.setAttribute('aria-hidden', 'false');
-        $('body').style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
         $('#svcTitle').textContent = this.serviceMeta(service).title;
         $('#svcSubtitle').textContent = this.serviceMeta(service).subtitle;
         this.renderStep();
+        closeBtn.focus();
+        track('service_open', { service });
       };
+
       const close = () => {
-        state.drawerOpen = false; drawer.setAttribute('aria-hidden', 'true');
-        $('body').style.overflow = '';
+        state.drawerOpen = false;
+        drawer.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
       };
-      openers.forEach(btn=>{
-        btn.addEventListener('click', (e)=>{
+
+      $$('.svc-open').forEach(btn => {
+        btn.addEventListener('click', e => {
           const service = e.currentTarget.closest('.service-card').dataset.service;
           open(service);
         });
       });
+
       closeBtn.addEventListener('click', close);
       backdrop.addEventListener('click', close);
 
-      nextBtn.addEventListener('click', ()=>{
-        if(!this.collectStep()) return; // validation
-        if(state.service==='snow'){
-          if(state.step < this.snowSteps().length-1){ state.step++; this.renderStep(); return; }
-        } else {
-          if(state.step < this.renoSteps().length-1){ state.step++; this.renderStep(); return; }
+      nextBtn.addEventListener('click', () => {
+        if (!this.collectStep()) return;
+        const steps = state.service === 'snow' ? this.snowSteps() : this.renoSteps();
+        if (state.step < steps.length - 1) {
+          state.step++;
+          this.renderStep();
+          return;
         }
-        // Completed -> dump into contact form
+        // Flow complete — pre-fill contact form
         const details = this.summary();
         const field = $('#serviceDetails');
-        if(field) field.value = details;
+        if (field) field.value = details;
         close();
         location.hash = '#contact';
-        $('#formStatus').textContent = 'Details added to your request. Complete the form to send.';
+        const status = $('#formStatus');
+        if (status) {
+          status.textContent = 'Details added. Fill in your name and email below to send.';
+          status.className = 'form-status';
+        }
+        track('quote_flow_complete', { service: state.service });
       });
-      backBtn.addEventListener('click', ()=>{ if(state.step>0){ state.step--; this.renderStep(); }});
-      window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && state.drawerOpen) close(); });
+
+      backBtn.addEventListener('click', () => {
+        if (state.step > 0) { state.step--; this.renderStep(); }
+      });
+
+      window.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && state.drawerOpen) close();
+      });
+
+      // Expose so snowPlans() can open with a pre-selected plan
+      this._openDrawer = open;
     },
 
-    serviceMeta(key){
+    serviceMeta(key) {
       const map = {
-        snow: { title:'Snow Removal', subtitle:'Pick a plan and add any extras.' },
-        kitchen: { title:'Kitchen Cabinet Installation', subtitle:'A few details to tailor your quote.' },
-        bathroom: { title:'Bathroom Renovations', subtitle:'Tell us about your space and finishes.' },
-        basement: { title:'Basement Finishing', subtitle:'Share your layout and goals.' },
-        flooring: { title:'Flooring & Painting', subtitle:'Square footage and material preferences help.' },
+        snow:     { title: 'Snow Removal',               subtitle: 'Pick a plan and add any extras.' },
+        kitchen:  { title: 'Kitchen Cabinet Installation',subtitle: 'A few details to tailor your quote.' },
+        bathroom: { title: 'Bathroom Renovations',        subtitle: 'Tell us about your space and finishes.' },
+        basement: { title: 'Basement Finishing',          subtitle: 'Share your layout and goals.' },
+        flooring: { title: 'Flooring & Painting',         subtitle: 'Square footage and material preferences help.' },
       };
-      return map[key] || { title:'Service', subtitle:'Tell us a bit more.' };
+      return map[key] || { title: 'Service', subtitle: 'Tell us a bit more.' };
     },
 
-    renoSteps(){
+    renoSteps() {
       return [
-        // Step 0: basics
-        (svc)=>{
-          return `
-            <div class="grid">
-              <label><span>Project Type</span><input value="${this.serviceMeta(svc).title}" disabled></label>
-              <label><span>Approx. Start</span><input type="month" id="startMonth"></label>
-            </div>
-            <label class="full"><span>Describe your space</span><textarea id="scope" rows="4" placeholder="Size, layout, existing conditions"></textarea></label>
-          `;
-        },
-        // Step 1: specifics
-        (svc)=>{
+        // Step 0 — basics
+        svc => `
+          <div class="grid">
+            <label><span>Project Type</span><input value="${this.serviceMeta(svc).title}" disabled></label>
+            <label><span>Approx. Start</span><input type="month" id="startMonth" value="${state.data.startMonth || ''}"></label>
+          </div>
+          <label class="full"><span>Describe your space</span>
+            <textarea id="scope" rows="4" placeholder="Size, layout, existing conditions">${state.data.scope || ''}</textarea>
+          </label>
+        `,
+        // Step 1 — service-specific
+        svc => {
           const specific = {
             kitchen: `
               <div class="grid">
-                <label><span>Cabinet length (ft)</span><input type="number" id="k_len" min="0" step="0.1"></label>
+                <label><span>Cabinet length (ft)</span>
+                  <input type="number" id="k_len" min="0" step="0.1" value="${state.data.k_len || ''}">
+                </label>
                 <label><span>Island?</span>
-                  <select id="k_island"><option>No</option><option>Yes</option></select></label>
+                  <select id="k_island">
+                    <option${state.data.k_island === 'No'  ? ' selected' : ''}>No</option>
+                    <option${state.data.k_island === 'Yes' ? ' selected' : ''}>Yes</option>
+                  </select>
+                </label>
               </div>
-              <label class="full"><span>Style / Material</span><input id="k_style" placeholder="Shaker, slab, wood species, etc."></label>
+              <label class="full"><span>Style / Material</span>
+                <input id="k_style" placeholder="Shaker, slab, wood species, etc." value="${state.data.k_style || ''}">
+              </label>
             `,
             bathroom: `
               <div class="grid">
                 <label><span>Shower or Tub?</span>
-                  <select id="bathing"><option>Shower</option><option>Tub</option><option>Both</option></select></label>
+                  <select id="bathing">
+                    <option${state.data.bathing === 'Shower' ? ' selected' : ''}>Shower</option>
+                    <option${state.data.bathing === 'Tub'    ? ' selected' : ''}>Tub</option>
+                    <option${state.data.bathing === 'Both'   ? ' selected' : ''}>Both</option>
+                  </select>
+                </label>
                 <label><span>Heated floors?</span>
-                  <select id="heat"><option>No</option><option>Yes</option></select></label>
+                  <select id="heat">
+                    <option${state.data.heat === 'No'  ? ' selected' : ''}>No</option>
+                    <option${state.data.heat === 'Yes' ? ' selected' : ''}>Yes</option>
+                  </select>
+                </label>
               </div>
-              <label class="full"><span>Tile & fixtures</span><input id="fixtures" placeholder="Tile size, niche, glass, vanity, etc."></label>
+              <label class="full"><span>Tile &amp; fixtures</span>
+                <input id="fixtures" placeholder="Tile size, niche, glass, vanity, etc." value="${state.data.fixtures || ''}">
+              </label>
             `,
             basement: `
               <div class="grid">
-                <label><span>Area (sqft)</span><input type="number" id="area" min="0"></label>
+                <label><span>Area (sqft)</span>
+                  <input type="number" id="area" min="0" value="${state.data.area || ''}">
+                </label>
                 <label><span>Separate suite?</span>
-                  <select id="suite"><option>No</option><option>Yes</option></select></label>
+                  <select id="suite">
+                    <option${state.data.suite === 'No'  ? ' selected' : ''}>No</option>
+                    <option${state.data.suite === 'Yes' ? ' selected' : ''}>Yes</option>
+                  </select>
+                </label>
               </div>
-              <label class="full"><span>Rooms</span><input id="rooms" placeholder="Bedroom, bath, rec, storage, gym, etc."></label>
+              <label class="full"><span>Rooms</span>
+                <input id="rooms" placeholder="Bedroom, bath, rec, storage, gym, etc." value="${state.data.rooms || ''}">
+              </label>
             `,
             flooring: `
               <div class="grid">
-                <label><span>Area (sqft)</span><input type="number" id="f_area" min="0"></label>
+                <label><span>Area (sqft)</span>
+                  <input type="number" id="f_area" min="0" value="${state.data.f_area || ''}">
+                </label>
                 <label><span>Floor Type</span>
-                  <select id="f_type"><option>Laminate</option><option>Vinyl</option><option>Hardwood</option><option>Tile</option></select></label>
+                  <select id="f_type">
+                    <option${state.data.f_type === 'Laminate' ? ' selected' : ''}>Laminate</option>
+                    <option${state.data.f_type === 'Vinyl'    ? ' selected' : ''}>Vinyl</option>
+                    <option${state.data.f_type === 'Hardwood' ? ' selected' : ''}>Hardwood</option>
+                    <option${state.data.f_type === 'Tile'     ? ' selected' : ''}>Tile</option>
+                  </select>
+                </label>
               </div>
-              <label class="full"><span>Painting</span><input id="paint" placeholder="Rooms, walls, ceilings, trim"></label>
+              <label class="full"><span>Painting</span>
+                <input id="paint" placeholder="Rooms, walls, ceilings, trim" value="${state.data.paint || ''}">
+              </label>
             `,
           };
-          return specific[svc] || '<p class="muted">Details</p>';
+          return specific[svc] || '<p class="muted">No additional details needed.</p>';
         },
-        // Step 2: budget + timing
-        ()=>{
-          return `
-            <div class="grid">
-              <label><span>Budget Range</span>
-                <select id="budget">
-                  <option>Undecided</option>
-                  <option>$2k–$5k</option>
-                  <option>$5k–$15k</option>
-                  <option>$15k–$35k</option>
-                  <option>$35k+</option>
-                </select></label>
-              <label><span>Timeline</span>
-                <select id="timeline">
-                  <option>Flexible</option>
-                  <option>ASAP</option>
-                  <option>1–3 months</option>
-                  <option>3–6 months</option>
-                </select></label>
-            </div>
-          `;
-        },
+        // Step 2 — budget & timeline
+        () => `
+          <div class="grid">
+            <label><span>Budget Range</span>
+              <select id="budget">
+                <option${state.data.budget === 'Undecided'   ? ' selected' : ''}>Undecided</option>
+                <option${state.data.budget === '$2k–$5k'    ? ' selected' : ''}>$2k&ndash;$5k</option>
+                <option${state.data.budget === '$5k–$15k'   ? ' selected' : ''}>$5k&ndash;$15k</option>
+                <option${state.data.budget === '$15k–$35k'  ? ' selected' : ''}>$15k&ndash;$35k</option>
+                <option${state.data.budget === '$35k+'        ? ' selected' : ''}>$35k+</option>
+              </select>
+            </label>
+            <label><span>Timeline</span>
+              <select id="timeline">
+                <option${state.data.timeline === 'Flexible'    ? ' selected' : ''}>Flexible</option>
+                <option${state.data.timeline === 'ASAP'        ? ' selected' : ''}>ASAP</option>
+                <option${state.data.timeline === '1–3 months' ? ' selected' : ''}>1&ndash;3 months</option>
+                <option${state.data.timeline === '3–6 months' ? ' selected' : ''}>3&ndash;6 months</option>
+              </select>
+            </label>
+          </div>
+        `,
       ];
     },
 
-    snowSteps(){
+    snowSteps() {
       return [
-        // Step 0: plan select
-        ()=>{
+        // Step 0 — pick plan
+        () => {
           const plans = this.getSnowPlans();
           return `
             <div class="cards plans-grid">
-              ${plans.map(p=>`
-                <article class="card plan" data-plan="${p.id}">
+              ${plans.map(p => `
+                <article class="card plan${state.data.plan === p.id ? ' plan-selected' : ''}" data-plan="${p.id}">
                   <h3>${p.name}</h3>
-                  <div class="price">${p.price.visit} • ${p.price.month} • ${p.price.season}</div>
-                  <ul class="muted">${p.includes.map(i=>`<li>${i}</li>`).join('')}</ul>
-                  <button class="btn btn-small choose-plan" data-plan="${p.id}">Choose</button>
+                  <div class="price">${p.price.visit} &bull; ${p.price.month} &bull; ${p.price.season}</div>
+                  <ul class="muted">${p.includes.map(i => `<li>${i}</li>`).join('')}</ul>
+                  <button class="btn btn-small choose-plan${state.data.plan === p.id ? ' btn-primary' : ''}" data-plan="${p.id}">
+                    ${state.data.plan === p.id ? '&#10003; Selected' : 'Choose'}
+                  </button>
                 </article>
               `).join('')}
             </div>
           `;
         },
-        // Step 1: add-ons
-        ()=>{
+        // Step 1 — add-ons
+        () => {
           const addons = this.getSnowAddons();
+          const selected = state.data.addons || [];
           return `
             <div class="card">
-              <h4>Add-Ons</h4>
-              <div class="grid">
-                ${addons.map(a=>`
-                  <label>
-                    <input type="checkbox" class="addon" value="${a.id}"> ${a.name}
-                    <div class="muted">${a.desc} — <strong>${a.price}</strong></div>
+              <h4>Optional Add-Ons</h4>
+              <div class="addons-list">
+                ${addons.map(a => `
+                  <label class="addon-row">
+                    <input type="checkbox" class="addon" value="${a.id}"${selected.includes(a.id) ? ' checked' : ''}>
+                    <div>
+                      <div>${a.name} &mdash; <strong>${a.price}</strong></div>
+                      <div class="muted">${a.desc}</div>
+                    </div>
                   </label>
                 `).join('')}
               </div>
             </div>
           `;
         },
-        // Step 2: property basics
-        ()=>{
-          return `
-            <div class="grid">
-              <label><span>Driveway size</span>
-                <select id="driveSize"><option>1–2 cars</option><option>2–3 cars</option><option>3+ cars</option></select></label>
-              <label><span>Corner lot?</span>
-                <select id="corner"><option>No</option><option>Yes</option></select></label>
-            </div>
-            <label class="full"><span>Notes</span><textarea id="notes" rows="3" placeholder="Any stairs, decks, special access, etc."></textarea></label>
-          `;
-        },
+        // Step 2 — property info
+        () => `
+          <div class="grid">
+            <label><span>Driveway size</span>
+              <select id="driveSize">
+                <option${state.data.driveSize === '1–2 cars' ? ' selected' : ''}>1&ndash;2 cars</option>
+                <option${state.data.driveSize === '2–3 cars' ? ' selected' : ''}>2&ndash;3 cars</option>
+                <option${state.data.driveSize === '3+ cars'       ? ' selected' : ''}>3+ cars</option>
+              </select>
+            </label>
+            <label><span>Corner lot?</span>
+              <select id="corner">
+                <option${state.data.corner === 'No'  ? ' selected' : ''}>No</option>
+                <option${state.data.corner === 'Yes' ? ' selected' : ''}>Yes</option>
+              </select>
+            </label>
+          </div>
+          <label class="full"><span>Notes</span>
+            <textarea id="notes" rows="3" placeholder="Stairs, decks, special access, etc.">${state.data.notes || ''}</textarea>
+          </label>
+        `,
       ];
     },
 
-    renderStep(){
+    renderStep() {
       const content = $('#svcContent');
-      const backBtn = $('#svcBack');
-      const nextBtn = $('#svcNext');
-      const steps = state.service==='snow' ? this.snowSteps() : this.renoSteps();
-      const total = steps.length;
+      const backBtn  = $('#svcBack');
+      const nextBtn  = $('#svcNext');
+      const steps    = state.service === 'snow' ? this.snowSteps() : this.renoSteps();
       content.innerHTML = steps[state.step](state.service);
-      backBtn.hidden = state.step===0;
-      nextBtn.textContent = state.step===total-1 ? 'Add to Quote' : 'Continue';
+      backBtn.hidden    = state.step === 0;
+      nextBtn.textContent = state.step === steps.length - 1 ? 'Add to Quote' : 'Continue';
 
-      // wire dynamic buttons within content
-      $$('.choose-plan', content).forEach(btn=>{
-        btn.addEventListener('click', (e)=>{
-          const id = e.currentTarget.dataset.plan;
-          state.data.plan = id;
-          state.step = Math.min(state.step+1, this.snowSteps().length-1);
+      $$('.choose-plan', content).forEach(btn => {
+        btn.addEventListener('click', e => {
+          state.data.plan = e.currentTarget.dataset.plan;
+          state.step = Math.min(state.step + 1, this.snowSteps().length - 1);
           this.renderStep();
         });
       });
     },
 
-    collectStep(){
-      if(state.service==='snow'){
-        if(state.step===0){
-          if(!state.data.plan){ alert('Please choose a snow plan to continue.'); return false; }
+    collectStep() {
+      if (state.service === 'snow') {
+        if (state.step === 0 && !state.data.plan) {
+          this.showDrawerError('Please choose a plan to continue.');
+          return false;
         }
-        if(state.step===1){
-          state.data.addons = $$('.addon').filter(a=>a.checked).map(a=>a.value);
+        if (state.step === 1) {
+          state.data.addons = $$('.addon').filter(a => a.checked).map(a => a.value);
         }
-        if(state.step===2){
+        if (state.step === 2) {
           state.data.driveSize = $('#driveSize').value;
-          state.data.corner = $('#corner').value;
-          state.data.notes = $('#notes').value;
+          state.data.corner    = $('#corner').value;
+          state.data.notes     = $('#notes').value.trim();
         }
         return true;
       }
-      // reno
-      if(state.step===0){
+      // Reno
+      if (state.step === 0) {
         state.data.startMonth = $('#startMonth')?.value || '';
-        state.data.scope = $('#scope')?.value || '';
+        state.data.scope      = $('#scope')?.value.trim() || '';
       }
-      if(state.step===1){
-        switch(state.service){
+      if (state.step === 1) {
+        switch (state.service) {
           case 'kitchen':
-            state.data.k_len = $('#k_len').value; state.data.k_island = $('#k_island').value; state.data.k_style = $('#k_style').value; break;
+            state.data.k_len    = $('#k_len').value;
+            state.data.k_island = $('#k_island').value;
+            state.data.k_style  = $('#k_style').value.trim();
+            break;
           case 'bathroom':
-            state.data.bathing = $('#bathing').value; state.data.heat = $('#heat').value; state.data.fixtures = $('#fixtures').value; break;
+            state.data.bathing  = $('#bathing').value;
+            state.data.heat     = $('#heat').value;
+            state.data.fixtures = $('#fixtures').value.trim();
+            break;
           case 'basement':
-            state.data.area = $('#area').value; state.data.suite = $('#suite').value; state.data.rooms = $('#rooms').value; break;
+            state.data.area  = $('#area').value;
+            state.data.suite = $('#suite').value;
+            state.data.rooms = $('#rooms').value.trim();
+            break;
           case 'flooring':
-            state.data.f_area = $('#f_area').value; state.data.f_type = $('#f_type').value; state.data.paint = $('#paint').value; break;
+            state.data.f_area = $('#f_area').value;
+            state.data.f_type = $('#f_type').value;
+            state.data.paint  = $('#paint').value.trim();
+            break;
         }
       }
-      if(state.step===2){
-        state.data.budget = $('#budget').value; state.data.timeline = $('#timeline').value;
+      if (state.step === 2) {
+        state.data.budget   = $('#budget').value;
+        state.data.timeline = $('#timeline').value;
       }
       return true;
     },
 
-    summary(){
-      if(state.service==='snow'){
-        const plan = this.getSnowPlans().find(p=>p.id===state.data.plan);
-        const addons = (state.data.addons||[]).map(id=>this.getSnowAddons().find(a=>a.id===id)?.name).filter(Boolean);
+    showDrawerError(msg) {
+      let err = $('#drawerError');
+      if (!err) {
+        err = document.createElement('div');
+        err.id = 'drawerError';
+        err.className = 'drawer-error';
+        err.setAttribute('role', 'alert');
+        $('#svcContent').insertAdjacentElement('afterend', err);
+      }
+      err.textContent = msg;
+      clearTimeout(err._timer);
+      err._timer = setTimeout(() => err.remove(), 4000);
+    },
+
+    summary() {
+      if (state.service === 'snow') {
+        const plan   = this.getSnowPlans().find(p => p.id === state.data.plan);
+        const addons = (state.data.addons || [])
+          .map(id => this.getSnowAddons().find(a => a.id === id)?.name)
+          .filter(Boolean);
         return [
-          `Service: Snow Removal`,
+          'Service: Snow Removal',
           `Plan: ${plan ? plan.name : 'N/A'}`,
-          addons.length? `Add-ons: ${addons.join(', ')}` : null,
-          `Driveway: ${state.data.driveSize||''}${state.data.corner==='Yes'? ', corner lot':''}`,
-          state.data.notes? `Notes: ${state.data.notes}`: null,
+          addons.length ? `Add-ons: ${addons.join(', ')}` : null,
+          `Driveway: ${state.data.driveSize || ''}${state.data.corner === 'Yes' ? ', corner lot' : ''}`,
+          state.data.notes ? `Notes: ${state.data.notes}` : null,
         ].filter(Boolean).join(' | ');
       }
       const title = this.serviceMeta(state.service).title;
       const parts = [`Service: ${title}`];
-      if(state.data.startMonth) parts.push(`Start: ${state.data.startMonth}`);
-      if(state.data.scope) parts.push(`Scope: ${state.data.scope}`);
+      if (state.data.startMonth) parts.push(`Start: ${state.data.startMonth}`);
+      if (state.data.scope)      parts.push(`Scope: ${state.data.scope}`);
       const svc = state.service;
-      if(svc==='kitchen') parts.push(`Length: ${state.data.k_len}ft, Island: ${state.data.k_island}, Style: ${state.data.k_style}`);
-      if(svc==='bathroom') parts.push(`Bathing: ${state.data.bathing}, Heated: ${state.data.heat}, Fixtures: ${state.data.fixtures}`);
-      if(svc==='basement') parts.push(`Area: ${state.data.area} sqft, Suite: ${state.data.suite}, Rooms: ${state.data.rooms}`);
-      if(svc==='flooring') parts.push(`Area: ${state.data.f_area} sqft, Type: ${state.data.f_type}, Painting: ${state.data.paint}`);
-      parts.push(`Budget: ${state.data.budget||'Undecided'}`, `Timeline: ${state.data.timeline||'Flexible'}`);
+      if (svc === 'kitchen')  parts.push(`Length: ${state.data.k_len}ft, Island: ${state.data.k_island}, Style: ${state.data.k_style}`);
+      if (svc === 'bathroom') parts.push(`Bathing: ${state.data.bathing}, Heated: ${state.data.heat}, Fixtures: ${state.data.fixtures}`);
+      if (svc === 'basement') parts.push(`Area: ${state.data.area} sqft, Suite: ${state.data.suite}, Rooms: ${state.data.rooms}`);
+      if (svc === 'flooring') parts.push(`Area: ${state.data.f_area} sqft, Type: ${state.data.f_type}, Painting: ${state.data.paint}`);
+      parts.push(`Budget: ${state.data.budget || 'Undecided'}`, `Timeline: ${state.data.timeline || 'Flexible'}`);
       return parts.join(' | ');
     },
 
-    snowPlans(){
-      // Render cards in the Snow Plans section on home
-      const grid = $('#snowPlansGrid'); if(!grid) return;
-      const plans = this.getSnowPlans();
-      grid.innerHTML = plans.map(p=>`
+    // ── Snow Plans section ────────────────────────────────────────────────
+
+    snowPlans() {
+      const grid = $('#snowPlansGrid');
+      if (!grid) return;
+      grid.innerHTML = this.getSnowPlans().map(p => `
         <article class="card plan">
           <h3>${p.name}</h3>
-          <div class="price">${p.price.visit} • ${p.price.month} • ${p.price.season}</div>
-          <ul class="muted">${p.includes.map(i=>`<li>${i}</li>`).join('')}</ul>
+          <div class="price">${p.price.visit} &bull; ${p.price.month} &bull; ${p.price.season}</div>
+          <ul class="muted">${p.includes.map(i => `<li>${i}</li>`).join('')}</ul>
           <button class="btn btn-primary btn-small" data-open-snow="${p.id}">Choose ${p.short}</button>
         </article>
       `).join('');
 
-      $$('[data-open-snow]')?.forEach(btn=>{
-        btn.addEventListener('click', (e)=>{
-          // Open drawer in snow mode + preselect plan
+      $$('[data-open-snow]').forEach(btn => {
+        btn.addEventListener('click', e => {
           const planId = e.currentTarget.getAttribute('data-open-snow');
-          const snowCard = document.querySelector('.service-card[data-service="snow"] .svc-open');
-          snowCard?.click();
-          state.data.plan = planId; // preselect
-          // re-render current step so selection is reflected
-          setTimeout(()=> this.renderStep(), 50);
+          if (this._openDrawer) this._openDrawer('snow', { plan: planId });
         });
       });
     },
 
-    getSnowPlans(){
+    getSnowPlans() {
       return [
         {
-          id:'basic', short:'Basic', name:'Basic Driveway Plan',
-          price:{ visit:'$45/visit', month:'$180/month', season:'$600/season' },
-          includes:[
+          id: 'basic', short: 'Basic', name: 'Basic Driveway Plan',
+          price: { visit: '$45/visit', month: '$180/month', season: '$600/season' },
+          includes: [
             '1–2 car driveway',
-            'Cleared within 8 hours after snowfall (≥2”)',
+            'Cleared within 8 hours after snowfall (≥2")',
             'Fast and affordable',
-            'No walkway or salting included'
-          ]
+            'No walkway or salting included',
+          ],
         },
         {
-          id:'standard', short:'Standard', name:'Standard Home Plan',
-          price:{ visit:'$55/visit', month:'$220/month', season:'$750/season' },
-          includes:[
+          id: 'standard', short: 'Standard', name: 'Standard Home Plan',
+          price: { visit: '$55/visit', month: '$220/month', season: '$750/season' },
+          includes: [
             'Driveway clearing (up to 2 cars)',
             'Walkway to main door',
             'Basic walkway salting',
-            'Service after snowfall ≥2”',
-            'Good coverage at fair cost'
-          ]
+            'Service after snowfall ≥2"',
+            'Good coverage at fair cost',
+          ],
         },
         {
-          id:'premium', short:'Premium', name:'Premium Coverage Plan',
-          price:{ visit:'$70/visit', month:'$280/month', season:'$950/season' },
-          includes:[
+          id: 'premium', short: 'Premium', name: 'Premium Coverage Plan',
+          price: { visit: '$70/visit', month: '$280/month', season: '$950/season' },
+          includes: [
             'Driveway, walkway, and full front sidewalk',
             'Porch and stairs cleared',
             'Salt/calcium chloride on all surfaces',
-            'Priority service after major snowfalls'
-          ]
+            'Priority service after major snowfalls',
+          ],
         },
         {
-          id:'commercial', short:'Commercial', name:'Commercial / Apartment Plan',
-          price:{ visit:'From $150/visit', month:'$500+/month', season:'By quote' },
-          includes:[
+          id: 'commercial', short: 'Commercial', name: 'Commercial / Apartment Plan',
+          price: { visit: 'From $150/visit', month: '$500+/month', season: 'By quote' },
+          includes: [
             'Parking lots, storefronts, building sidewalks',
             'Drive lanes, loading zones, walkways',
             'Full salting coverage',
-            'Optional night or early-morning service'
-          ]
-        }
+            'Optional night or early-morning service',
+          ],
+        },
       ];
     },
 
-    getSnowAddons(){
+    getSnowAddons() {
       return [
-        { id:'extra-salt', name:'Extra salting (per visit)', price:'+$10–$15', desc:'After freezing rain or refreeze' },
-        { id:'refreeze', name:'Refreeze monitoring', price:'+$15/month', desc:'One free return after melt/refreeze' },
-        { id:'priority', name:'Priority route', price:'+$20/month', desc:'Guaranteed service within first 3 hours' },
-        { id:'roof-deck', name:'Roof or deck clearing', price:'From $100', desc:'Upon request; quote per property' },
+        { id: 'extra-salt', name: 'Extra salting (per visit)', price: '+$10–$15', desc: 'After freezing rain or refreeze' },
+        { id: 'refreeze',   name: 'Refreeze monitoring',       price: '+$15/month',   desc: 'One free return after melt/refreeze' },
+        { id: 'priority',   name: 'Priority route',            price: '+$20/month',   desc: 'Guaranteed service within first 3 hours' },
+        { id: 'roof-deck',  name: 'Roof or deck clearing',     price: 'From $100',    desc: 'Upon request; quote per property' },
       ];
     },
 
-    /* Work gallery */
-    gallery(){
-      const gallery = $('#gallery'); const filters = $('#filters');
-      if(!gallery || !filters) return;
-      filters.addEventListener('click', (e)=>{
-        if(!(e.target instanceof HTMLElement)) return;
-        if(!e.target.matches('.chip')) return;
-        $$('.chip', filters).forEach(c=>c.classList.remove('active'));
-        e.target.classList.add('active');
-        const tag = e.target.getAttribute('data-filter');
-        $$('.gal-item', gallery).forEach(item=>{
-          const tags = (item.getAttribute('data-tags')||'').split(',');
-          const show = tag==='all' || tags.includes(tag);
-          item.style.display = show ? '' : 'none';
-        });
-      });
+    // ── Contact Form ──────────────────────────────────────────────────────
 
-      // Click to open lightbox
-      $$('.gal-item', gallery).forEach(item=>{
-        item.addEventListener('click', ()=>{
-          const img = $('img', item); const vid = $('video', item);
-          const content = $('#lightboxContent');
-          content.innerHTML = '';
-          if(img){ const el = img.cloneNode(true); el.removeAttribute('style'); content.appendChild(el); }
-          if(vid){ const el = vid.cloneNode(true); el.controls = true; el.muted = false; el.autoplay = true; el.removeAttribute('style'); content.appendChild(el); }
-          $('#lightbox').setAttribute('aria-hidden','false');
-        });
-      });
+    contactForm() {
+      const form = $('#contactForm');
+      if (!form) return;
+      form.addEventListener('submit', e => this.handleContactSubmit(e));
     },
 
-    lightbox(){
-      const lb = $('#lightbox'); if(!lb) return;
-      $('#lightboxClose').addEventListener('click', ()=> lb.setAttribute('aria-hidden','true'));
-      $('#lightboxBackdrop').addEventListener('click', ()=> lb.setAttribute('aria-hidden','true'));
-      window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') lb.setAttribute('aria-hidden','true'); });
-    },
+    async handleContactSubmit(e) {
+      e.preventDefault();
+      const form      = e.target;
+      const status    = $('#formStatus');
+      const submitBtn = form.querySelector('[type="submit"]');
 
-    // New: Locations view (three cards)
-    locations(){
-      const cards = $('#locCards'); if(!cards) return;
-      const gallery = $('#locGallery'); const head = $('#locHead'); const title = $('#locTitle');
-      const sets = [
-        { key:'H', label:'Hamilton', prefixes:['H'] },
-        { key:'T', label:'Hamilton', prefixes:['T'] },
-        { key:'B', label:'Burlington', prefixes:['B'] },
-      ];
-      const exImg = ['jpg','jpeg','png','webp'];
-      const exVid = ['mp4','webm'];
-      const maxN = 60;
-      const results = { H:[], T:[], B:[] };
+      // Clear previous errors
+      $$('.field-error', form).forEach(el => el.remove());
+      $$('.input-error', form).forEach(el => el.classList.remove('input-error'));
 
-      const getStage = (src)=>{ const m = /([A-Za-z])([ABab])(\d+)\.[A-Za-z0-9]+$/.exec(src); return m ? (m[2].toUpperCase()==='A'?'A':'B') : 'B'; };
-      const add = (k, media) => { results[k].push(media); };
-      const tryImg = (src, k) => { const im = new Image(); im.onload=()=> add(k,{type:'img',src,stage:getStage(src)}); im.onerror=()=>{}; im.src=src; };
-      const tryVid = (src, k) => { const v = document.createElement('video'); v.onloadeddata = ()=> add(k,{type:'video',src,stage:getStage(src)}); v.onerror = ()=>{}; v.src = src; v.load(); };
+      const data   = Object.fromEntries(new FormData(form));
+      const errors = this.validateContactForm(data);
 
-      sets.forEach(set=>{
-        set.prefixes.forEach(p=>{
-          for(let n=1;n<=maxN;n++){
-            ['A','B'].forEach(stage=>{
-              exImg.forEach(ext=> tryImg(`images/${p}${stage}${n}.${ext}`, set.key));
-              exVid.forEach(ext=> tryVid(`videos/${p}${stage}${n}.${ext}`, set.key));
-            });
-          }
+      if (errors.length) {
+        errors.forEach(({ field, msg }) => {
+          const input = form.querySelector(`[name="${field}"]`);
+          if (!input) return;
+          input.classList.add('input-error');
+          const errEl = document.createElement('span');
+          errEl.className = 'field-error';
+          errEl.textContent = msg;
+          input.insertAdjacentElement('afterend', errEl);
         });
-      });
-
-      // Build cards after a short gather period
-      setTimeout(()=>{
-        cards.innerHTML = sets.map(set=>{
-          const arr = results[set.key] || [];
-          const cover = arr.find(m=>m.type==='img') || arr[0];
-          const bg = cover && cover.type==='img' ? `style="background:url('${cover.src}') center/cover no-repeat"` : '';
-          return `
-            <article class="loc-card" data-loc="${set.key}" ${bg}>
-              <div class="meta">${set.key==='B'?'Burlington':'Hamilton'}</div>
-              <div>
-                <div class="title">${set.label}</div>
-                <div class="count">${arr.length} item${arr.length===1?'':'s'}</div>
-              </div>
-            </article>
-          `;
-        }).join('');
-
-        // Wire clicks
-        $$('.loc-card', cards).forEach(card=>{
-          card.addEventListener('click', ()=>{
-            const key = card.getAttribute('data-loc');
-            const arr = results[key] || [];
-            title.textContent = key==='B' ? 'Burlington' : (key==='T' ? 'Hamilton ' : 'Hamilton');
-            head.style.display = '';
-            gallery.innerHTML = arr.map(m=>{
-              const badge = `<span class=\"badge ${m.stage==='A'?'after':'before'}\">${m.stage==='A'?'After':'Before'}</span>`;
-              if(m.type==='img'){
-                return `<figure class=\"gal-item\" data-mediatype=\"img\" data-src=\"${m.src}\">${badge}<img src=\"${m.src}\" alt=\"Project image\"/><figcaption>Image</figcaption></figure>`;
-              } else {
-                return `<figure class=\"gal-item\" data-mediatype=\"video\" data-src=\"${m.src}\">${badge}<video src=\"${m.src}\" muted playsinline loop></video><figcaption>Video</figcaption></figure>`;
-              }
-            }).join('');
-            $$('.gal-item', gallery).forEach(item=> item.addEventListener('click', ()=> openLightboxFor(item)) );
-          });
-        });
-      }, 700);
-
-      // Update counts and covers as media load
-      let ticks = 0; const timer = setInterval(()=>{
-        sets.forEach(set=>{
-          const card = document.querySelector(`.loc-card[data-loc="${set.key}"]`); if(!card) return;
-          const arr = results[set.key] || [];
-          const cnt = card.querySelector('.count'); if(cnt) cnt.textContent = `${arr.length} item${arr.length===1?'':'s'}`;
-          const cover = arr.find(m=>m.type==='img') || arr[0];
-          if(cover && cover.type==='img' && !card.style.backgroundImage){
-            card.style.background = `url('${cover.src}') center/cover no-repeat, linear-gradient(180deg,#0f1318,#0a0c0f)`;
-          }
-        });
-        if(++ticks>14) clearInterval(timer);
-      }, 500);
-    },
-
-    // Dynamic work page: loads images from images/from1.jpg..from45.jpg (or 1..45)
-    dynamicWork(){
-      const host = $('#dynGallery');
-      if(!host) return;
-
-      const filenames = [];
-      const bases = [];
-      for(let i=1;i<=45;i++){ bases.push(`from${i}`); bases.push(`${i}`); }
-      const exts = ['jpg','jpeg','JPG','JPEG','png','PNG','webp','WEBP'];
-      const seen = new Set();
-      bases.forEach(b=> exts.forEach(ext=> filenames.push(`images/${b}.${ext}`)) );
-
-      const getMeta = (src)=>{
-        const key = `rr:img:${src.toLowerCase()}`;
-        const saved = JSON.parse(localStorage.getItem(key)||'{}');
-        return {
-          stage: saved.stage || 'unknown', // before|during|after|unknown
-          cat: saved.cat || 'misc', // kitchen|bathroom|basement|flooring|exterior|misc
-          pair: saved.pair || '',
-          note: saved.note || ''
-        };
-      };
-      const saveMeta = (src, meta)=>{
-        const key = `rr:img:${src.toLowerCase()}`;
-        localStorage.setItem(key, JSON.stringify(meta));
-      };
-
-      const loadedKeys = new Set();
-      const baseKey = (p)=> (p||'').toLowerCase().replace(/\.(jpe?g|png|webp)$/i,'');
-
-      const addCard = (src)=>{
-        const img = new Image();
-        img.alt = 'Project photo';
-        img.onload = ()=>{
-          const bkey = baseKey(src);
-          if(loadedKeys.has(bkey)) return; // already added via another extension/case
-          loadedKeys.add(bkey);
-
-          const fig = document.createElement('figure');
-          fig.className = 'gal-item taggable';
-          fig.dataset.src = src.toLowerCase();
-
-          let meta = getMeta(src);
-          const seed = this.seedTags();
-          const look = src.toLowerCase();
-          if((!meta.stage || meta.stage==='unknown') && seed[look]){
-            meta = Object.assign({}, meta, seed[look]);
-            saveMeta(look, meta);
-          }
-          fig.dataset.stage = meta.stage; fig.dataset.cat = meta.cat; fig.dataset.pair = meta.pair;
-
-          const cap = document.createElement('figcaption');
-          cap.innerHTML = `<span class=\"tag cat\">${meta.cat}</span>`;
-
-          const edit = document.createElement('button');
-          edit.className = 'edit-btn'; edit.type = 'button'; edit.textContent = 'Edit';
-          edit.addEventListener('click', ()=> openEditor(fig));
-
-          fig.appendChild(img);
-          fig.appendChild(cap);
-          fig.appendChild(edit);
-          fig.addEventListener('click', (e)=>{ if(e.target===edit) return; openLightboxFor(fig); });
-          host.appendChild(fig);
-        };
-        img.onerror = ()=>{ /* skip missing */ };
-        img.src = src;
-      };
-
-      const openEditor = (fig)=>{
-        const src = fig.dataset.src;
-        const meta = getMeta(src);
-        const panel = document.createElement('div');
-        panel.className = 'tag-editor';
-        panel.innerHTML = `
-          <label>Stage<select id="te-stage">
-            <option value="before" ${meta.stage==='before'?'selected':''}>Before</option>
-            <option value="during" ${meta.stage==='during'?'selected':''}>During</option>
-            <option value="after" ${meta.stage==='after'?'selected':''}>After</option>
-            <option value="unknown" ${meta.stage==='unknown'?'selected':''}>Unknown</option>
-          </select></label>
-          <label>Category<select id="te-cat">
-            <option value="kitchen" ${meta.cat==='kitchen'?'selected':''}>Kitchen</option>
-            <option value="bathroom" ${meta.cat==='bathroom'?'selected':''}>Bathroom</option>
-            <option value="basement" ${meta.cat==='basement'?'selected':''}>Basement</option>
-            <option value="flooring" ${meta.cat==='flooring'?'selected':''}>Flooring/Paint</option>
-            <option value="exterior" ${meta.cat==='exterior'?'selected':''}>Exterior</option>
-            <option value="misc" ${meta.cat==='misc'?'selected':''}>Misc</option>
-          </select></label>
-          <label>Pair ID<input id="te-pair" placeholder="e.g. K1, B1" value="${meta.pair||''}"></label>
-          <label>Note<input id="te-note" placeholder="Short caption" value="${meta.note||''}"></label>
-          <div class="actions"><button id="te-save" class="btn btn-primary btn-small">Save</button> <button id="te-cancel" class="btn btn-small">Cancel</button></div>
-        `;
-        fig.appendChild(panel);
-        $('#te-save', panel).addEventListener('click', ()=>{
-          const newMeta = {
-            stage: $('#te-stage', panel).value,
-            cat: $('#te-cat', panel).value,
-            pair: $('#te-pair', panel).value.trim(),
-            note: $('#te-note', panel).value.trim(),
-          };
-          saveMeta(src, newMeta);
-          fig.dataset.stage = newMeta.stage; fig.dataset.cat = newMeta.cat; fig.dataset.pair = newMeta.pair;
-          const sEl = $('figcaption .stage', fig); if(sEl) sEl.textContent = newMeta.stage;
-          $('figcaption .cat', fig).textContent = newMeta.cat;
-          panel.remove();
-          applyFilters();
-        });
-        $('#te-cancel', panel).addEventListener('click', ()=> panel.remove());
-      };
-
-      const openLightboxFor = (fig)=>{
-        const src = fig.dataset.src; const mediaType = fig.dataset.mediatype || 'img';
-        const meta = getMeta(src);
-        const lb = $('#lightbox'); const content = $('#lightboxContent');
-        content.innerHTML = '';
-        if(mediaType==='video'){
-          const vid = document.createElement('video'); vid.src = src; vid.controls = true; vid.autoplay = true; vid.playsInline = true;
-          content.appendChild(vid);
-        } else {
-          const wrap = document.createElement('div'); wrap.className = 'lb-image';
-          const img = document.createElement('img'); img.src = src; img.alt = meta.note||'Project photo';
-          wrap.appendChild(img);
-          content.appendChild(wrap);
-        }
-        lb.setAttribute('aria-hidden','false');
-      };
-
-      // Build gallery by loading images that exist (onload appends)
-      filenames.forEach(src=> addCard(src));
-
-      // Edit mode toggle shows edit buttons
-      const editToggle = $('#editMode');
-      if(editToggle){
-        const set = ()=>{ host.classList.toggle('editing', editToggle.checked); };
-        editToggle.addEventListener('change', set); set();
+        form.querySelector('.input-error')?.focus();
+        return;
       }
 
-      // Filtering
-      const applyFilters = ()=>{
-        const activeCat = $('.filters#filtersCat .chip.active')?.getAttribute('data-cat') || 'all';
-        $$('.gal-item', host).forEach(item=>{
-          const okCat = activeCat==='all' || item.dataset.cat===activeCat;
-          item.style.display = okCat ? '' : 'none';
-        });
-      };
+      submitBtn.disabled      = true;
+      submitBtn.textContent   = 'Sending…';
+      status.textContent      = '';
+      status.className        = 'form-status';
 
-      const wireFilterGroup = (groupSel, attr)=>{
-        const grp = $(groupSel); if(!grp) return;
-        grp.addEventListener('click', (e)=>{
-          if(!(e.target instanceof HTMLElement)) return; if(!e.target.matches('.chip')) return;
-          $$('.chip', grp).forEach(c=>c.classList.remove('active')); e.target.classList.add('active');
-          applyFilters();
+      try {
+        const payload = {
+          access_key:      WEB3FORMS_KEY,
+          subject:         'Quote Request — Reno Riser Construction',
+          from_name:       data.name.trim(),
+          email:           data.email.trim(),
+          phone:           data.phone    || '',
+          address:         data.address  || '',
+          service_details: data.serviceDetails || '',
+          message:         data.message  || '',
+        };
+
+        const res  = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(payload),
         });
-      };
-      wireFilterGroup('#filtersCat', 'data-cat');
-      // initial filter apply once some images load
-      setTimeout(applyFilters, 400);
+        const json = await res.json();
+
+        if (json.success) {
+          status.textContent = "✓ Request sent! We’ll be in touch shortly.";
+          status.className   = 'form-status success';
+          form.reset();
+          track('quote_submitted', { method: data.serviceDetails ? 'drawer' : 'direct' });
+        } else {
+          throw new Error(json.message || 'Submission failed');
+        }
+      } catch {
+        status.textContent = 'Something went wrong. Please email us directly at renoriser@outlook.com';
+        status.className   = 'form-status error';
+      } finally {
+        submitBtn.disabled    = false;
+        submitBtn.textContent = 'Request Quote';
+      }
     },
 
-    // Default tagging for your numbered images
-    seedTags(){
-      const S = (stage, cat, pair, note='')=>({ stage, cat, pair, note });
-      return {
-        // Bedroom flooring swap (carpet -> hardwood)
-        'images/1.jpeg': S('before','flooring','FLR1','Bedroom before (carpet)'),
-        'images/2.jpeg': S('during','flooring','FLR1','Prep and trim removal'),
-        'images/3.jpeg': S('after','flooring','FLR1','New hardwood installed'),
-
-        // Small room repaint / refresh
-        'images/4.jpeg': S('during','flooring','PAINT1','Wall patching'),
-        'images/5.jpeg': S('before','flooring','PAINT1','Before repaint'),
-        'images/6.jpeg': S('during','flooring','PAINT1','Prep + patch'),
-        'images/7.jpeg': S('after','flooring','PAINT1','Room cleared, ready'),
-
-        // Another room repaint
-        'images/8.jpeg': S('before','flooring','PAINT2','Before repaint'),
-        'images/9.jpeg': S('during','flooring','PAINT2','Patching'),
-        'images/10.jpeg': S('during','flooring','PAINT2','Ceiling fan + prep'),
-
-        // Small room update
-        'images/11.jpeg': S('before','flooring','PAINT3','Before repaint'),
-        'images/12.jpeg': S('during','flooring','PAINT3','Prep work'),
-        'images/13.jpeg': S('during','flooring','PAINT3','Hall/room junction'),
-        'images/17.jpeg': S('after','flooring','PAINT3','Finished repaint'),
-
-        // Kitchen flooring refresh
-        'images/14.jpeg': S('during','kitchen','KIT1','Kitchen floor install'),
-        'images/15.jpeg': S('after','kitchen','KIT1','New vinyl plank floor'),
-        'images/16.jpeg': S('after','kitchen','KIT1','Kitchen refreshed'),
-
-        // Basement bathroom renovation
-        'images/18.jpeg': S('before','bathroom','BATH1','Old shower + tile'),
-        'images/19.jpeg': S('before','bathroom','BATH1','Vanity + toilet (old)'),
-        'images/20.jpeg': S('before','bathroom','BATH1','Shower before'),
-        'images/21.jpeg': S('before','bathroom','BATH1','Vanity + mirror (old)'),
-        'images/30.jpeg': S('during','bathroom','BATH1','Painting and fixtures'),
-        'images/43.jpeg': S('after','bathroom','BATH1','New vanity and mirror'),
-        'images/44.jpeg': S('after','bathroom','BATH1','New corner shower'),
-        'images/45.jpeg': S('after','bathroom','BATH1','Completed bathroom'),
-
-        // Basement finishing + flooring
-        'images/22.jpeg': S('before','basement','BASE1','Basement stairwell before'),
-        'images/23.jpeg': S('before','basement','BASE1','Old shelving area'),
-        'images/24.jpeg': S('before','basement','BASE1','Landing before'),
-        'images/25.jpeg': S('during','basement','BASE1','Main room prep'),
-        'images/26.jpeg': S('during','basement','BASE1','Closet/nook prep'),
-        'images/27.jpeg': S('during','basement','BASE1','Carpet removal'),
-        'images/28.jpeg': S('during','basement','BASE1','Stairs + wall patching'),
-        'images/29.jpeg': S('during','basement','BASE1','Underlayment roll-out'),
-        'images/31.jpeg': S('during','basement','BASE1','Stair wall patching'),
-        'images/32.jpeg': S('during','basement','BASE1','Subfloor prep'),
-        'images/33.jpeg': S('during','basement','BASE1','Moisture barrier start'),
-        'images/34.jpeg': S('during','basement','BASE1','Barrier laid across room'),
-        'images/35.jpeg': S('during','basement','BASE1','Layout + laser leveling'),
-        'images/36.jpeg': S('after','basement','BASE1','New LVP + painted stairs'),
-        'images/37.jpeg': S('after','basement','BASE1','Finished hallway'),
-        'images/38.jpeg': S('after','basement','BASE1','Stair nosing + tread'),
-        'images/39.jpeg': S('after','basement','BASE1','Finished landing'),
-        'images/40.jpeg': S('after','basement','BASE1','Finished room + lights'),
-        'images/41.jpeg': S('after','basement','BASE1','Closet + trim complete'),
-        'images/42.jpeg': S('after','basement','BASE1','Stairwell complete'),
-      };
+    validateContactForm(data) {
+      const errors = [];
+      if (!data.name?.trim()) {
+        errors.push({ field: 'name', msg: 'Name is required.' });
+      }
+      if (!data.email?.trim()) {
+        errors.push({ field: 'email', msg: 'Email is required.' });
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+        errors.push({ field: 'email', msg: 'Please enter a valid email address.' });
+      }
+      return errors;
     },
 
-    handleContactSubmit(e){
-      e.preventDefault();
-      const form = e.target;
-      const data = new FormData(form);
-      const summary = data.get('serviceDetails');
-      // Mailto fallback for quick demos
-      const subject = encodeURIComponent('Quote Request — Reno Riser Construction');
-      const body = encodeURIComponent([
-        `Name: ${data.get('name')}`,
-        `Email: ${data.get('email')}`,
-        `Phone: ${data.get('phone')}`,
-        `Address: ${data.get('address')}`,
-        summary ? `Details: ${summary}` : null,
-        data.get('message') ? `Message: ${data.get('message')}` : null,
-      ].filter(Boolean).join('\n'));
-      $('#formStatus').textContent = 'Opening your mail app…';
-      window.location.href = `mailto:renoriser@outlook.com?subject=${subject}&body=${body}`;
-      return false;
+    // ── Gallery / Work Page ───────────────────────────────────────────────
+
+    openLightboxFor(item) {
+      const src       = item.dataset.src;
+      const mediaType = item.dataset.mediatype || 'img';
+      const lb        = $('#lightbox');
+      const content   = $('#lightboxContent');
+      if (!lb || !content) return;
+
+      content.innerHTML = '';
+
+      if (mediaType === 'video') {
+        const vid = document.createElement('video');
+        vid.src = src; vid.controls = true; vid.autoplay = true; vid.playsInline = true;
+        content.appendChild(vid);
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'lb-image';
+        const img = document.createElement('img');
+        img.src = src; img.alt = 'Project photo';
+        wrap.appendChild(img);
+        content.appendChild(wrap);
+      }
+
+      lb.setAttribute('aria-hidden', 'false');
+      $('#lightboxClose')?.focus();
+    },
+
+    lightbox() {
+      const lb = $('#lightbox');
+      if (!lb) return;
+      const close = () => lb.setAttribute('aria-hidden', 'true');
+      $('#lightboxClose').addEventListener('click', close);
+      $('#lightboxBackdrop').addEventListener('click', close);
+      window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    },
+
+    locations() {
+      const cards = $('#locCards');
+      if (!cards) return;
+
+      const gallery = $('#locGallery');
+      const head    = $('#locHead');
+      const title   = $('#locTitle');
+
+      fetch(MANIFEST_URL)
+        .then(r => {
+          if (!r.ok) throw new Error('manifest not found');
+          return r.json();
+        })
+        .then(manifest => {
+          cards.innerHTML = Object.entries(manifest).map(([key, items]) => {
+            const cover = items.find(m => m.type === 'img');
+            const bgStyle = cover
+              ? `style="background:url('${cover.src}') center/cover no-repeat, linear-gradient(180deg,#0f1318,#0a0c0f)"`
+              : '';
+            const label = LOC_LABELS[key] || key;
+            return `
+              <article class="loc-card" data-loc="${key}" ${bgStyle} tabindex="0" role="button" aria-label="Open ${label} gallery">
+                <div class="meta">${label}</div>
+                <div>
+                  <div class="title">${label}</div>
+                  <div class="count">${items.length} item${items.length === 1 ? '' : 's'}</div>
+                </div>
+              </article>
+            `;
+          }).join('');
+
+          const openGallery = card => {
+            const key   = card.getAttribute('data-loc');
+            const items = manifest[key] || [];
+            title.textContent = LOC_LABELS[key] || key;
+            head.style.display = '';
+
+            gallery.innerHTML = items.map(m => {
+              const isAfter     = m.stage === 'A';
+              const stageLabel  = isAfter ? 'After' : 'Before';
+              const stageClass  = isAfter ? 'after' : 'before';
+              if (m.type === 'img') {
+                return `
+                  <figure class="gal-item" data-mediatype="img" data-src="${m.src}">
+                    <span class="badge ${stageClass}">${stageLabel}</span>
+                    <img src="${m.src}" alt="${stageLabel} photo" loading="lazy">
+                    <figcaption>${stageLabel}</figcaption>
+                  </figure>
+                `;
+              }
+              return `
+                <figure class="gal-item" data-mediatype="video" data-src="${m.src}">
+                  <span class="badge ${stageClass}">${stageLabel}</span>
+                  <video src="${m.src}" muted playsinline loop></video>
+                  <figcaption>Video &mdash; ${stageLabel}</figcaption>
+                </figure>
+              `;
+            }).join('');
+
+            $$('.gal-item', gallery).forEach(item => {
+              item.addEventListener('click', () => this.openLightboxFor(item));
+            });
+
+            head.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          };
+
+          $$('.loc-card', cards).forEach(card => {
+            card.addEventListener('click', () => openGallery(card));
+            card.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGallery(card); }
+            });
+          });
+        })
+        .catch(() => {
+          cards.innerHTML = '<p class="muted">Unable to load projects. Please try again later.</p>';
+        });
     },
   };
 
-  // Mount
-  document.addEventListener('DOMContentLoaded', ()=> App.init());
+  document.addEventListener('DOMContentLoaded', () => App.init());
 })();
-
-

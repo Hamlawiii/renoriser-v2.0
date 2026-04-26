@@ -1,0 +1,45 @@
+{
+  "H": [
+    {"type":"img","src":"images/HA1.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA2.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA3.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA4.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA5.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA6.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA7.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA8.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA9.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA10.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA11.jpeg","stage":"A"},
+    {"type":"img","src":"images/HA12.jpeg","stage":"A"},
+    {"type":"img","src":"images/HB1.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB2.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB3.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB4.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB5.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB6.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB7.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB8.jpeg","stage":"B"},
+    {"type":"img","src":"images/HB9.jpeg","stage":"B"}
+  ],
+  "T": [
+    {"type":"img","src":"images/TA1.jpeg","stage":"A"},
+    {"type":"video","src":"videos/TA1.mp4","stage":"A"},
+    {"type":"img","src":"images/TB1.jpeg","stage":"B"},
+    {"type":"img","src":"images/TB2.jpeg","stage":"B"},
+    {"type":"video","src":"videos/TB1.mp4","stage":"B"},
+    {"type":"video","src":"videos/TB2.mp4","stage":"B"}
+  ],
+  "B": [
+    {"type":"img","src":"images/BA1.jpeg","stage":"A"},
+    {"type":"img","src":"images/BA2.jpeg","stage":"A"},
+    {"type":"img","src":"images/BA3.jpeg","stage":"A"},
+    {"type":"img","src":"images/BA4.jpeg","stage":"A"},
+    {"type":"img","src":"images/BA5.jpeg","stage":"A"},
+    {"type":"img","src":"images/BB1.jpeg","stage":"B"},
+    {"type":"img","src":"images/BB2.jpeg","stage":"B"},
+    {"type":"img","src":"images/BB3.jpeg","stage":"B"},
+    {"type":"img","src":"images/BB4.jpeg","stage":"B"},
+    {"type":"img","src":"images/BB5.jpeg","stage":"B"}
+  ]
+}
