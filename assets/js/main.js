@@ -1,4 +1,4 @@
-/* Reno Riser Construction — Interactive logic */
+/* Renoriser — Interactive logic */
 (function () {
   'use strict';
 
@@ -45,10 +45,10 @@
       if (!hdr) return;
       window.addEventListener('scroll', () => {
         const scrolled = window.scrollY > 2;
-        hdr.style.boxShadow = scrolled ? '0 2px 16px rgba(0,0,0,0.25)' : 'none';
+        hdr.style.boxShadow = scrolled ? '0 4px 20px rgba(28,58,94,0.10)' : 'none';
         hdr.style.background = scrolled
-          ? 'rgba(13,15,18,0.85)'
-          : 'rgba(13,15,18,0.6)';
+          ? 'rgba(255,255,255,0.92)'
+          : 'rgba(255,255,255,0.85)';
       }, { passive: true });
     },
 
@@ -577,7 +577,7 @@
       try {
         const payload = {
           access_key:      WEB3FORMS_KEY,
-          subject:         'Quote Request — Reno Riser Construction',
+          subject:         'Quote Request — Renoriser',
           from_name:       data.name.trim(),
           email:           data.email.trim(),
           phone:           data.phone    || '',
@@ -677,7 +677,7 @@
           cards.innerHTML = Object.entries(manifest).map(([key, items]) => {
             const cover = items.find(m => m.type === 'img');
             const bgStyle = cover
-              ? `style="background:url('${cover.src}') center/cover no-repeat, linear-gradient(180deg,#0f1318,#0a0c0f)"`
+              ? `style="background:url('${cover.src}') center/cover no-repeat, linear-gradient(180deg,#2c5d8f,#1c3a5e)"`
               : '';
             const label = LOC_LABELS[key] || key;
             return `
