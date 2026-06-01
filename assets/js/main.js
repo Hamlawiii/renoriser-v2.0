@@ -1,743 +1,390 @@
-/* Renoriser — Interactive logic */
+/* =========================================================================
+   Renoriser — site interactions (shared across all pages).
+   Each module feature-detects by element presence, so one file serves
+   home, services, technology, quote, work, and privacy pages.
+   ========================================================================= */
 (function () {
   'use strict';
 
-  const $ = (sel, el = document) => el.querySelector(sel);
-  const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+  var $ = function (sel, el) { return (el || document).querySelector(sel); };
+  var $$ = function (sel, el) { return Array.prototype.slice.call((el || document).querySelectorAll(sel)); };
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ── Constants ─────────────────────────────────────────────────────────────
-  // Get a free key at https://web3forms.com — takes 30 seconds, no account needed
-  const WEB3FORMS_KEY = '360776cf-4e34-4f90-9bf5-f830ad11b832';
-  const MANIFEST_URL = 'images/manifest.json';
-  const LOC_LABELS = { H: 'Hamilton', T: 'Hamilton', B: 'Burlington' };
+  // Web3Forms key — get a free one at https://web3forms.com to change the destination.
+  var WEB3FORMS_KEY = '360776cf-4e34-4f90-9bf5-f830ad11b832';
+  var MANIFEST_URL = 'images/manifest.json';
+  var LOC_LABELS = { H: 'Hamilton', T: 'Hamilton', B: 'Burlington' };
 
-  // ── State ─────────────────────────────────────────────────────────────────
-  const state = {
-    drawerOpen: false,
-    step: 0,
-    service: null,
-    data: {},
-  };
+  function track(name, params) {
+    if (typeof gtag === 'function') gtag('event', name, params || {});
+  }
 
-  // ── Analytics helper ──────────────────────────────────────────────────────
-  const track = (name, params = {}) => {
-    if (typeof gtag === 'function') gtag('event', name, params);
-  };
+  /* ---- Footer year ---- */
+  $$('#year').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 
-  // ── App ───────────────────────────────────────────────────────────────────
-  const App = {
-    init() {
-      this.header();
-      this.footerYear();
-      this.navMenu();
-      this.drawer();
-      this.snowPlans();
-      this.contactForm();
-      this.locations();
-      this.lightbox();
-      window.App = this;
-    },
+  /* ---- Header shrink on scroll ---- */
+  var header = $('.site-header');
+  if (header) {
+    var onScroll = function () { header.classList.toggle('scrolled', window.scrollY > 8); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
 
-    // ── Header scroll effect ─────────────────────────────────────────────
+  /* ---- Mobile full-screen overlay nav ---- */
+  var nav = $('#nav');
+  var toggle = $('#navToggle');
+  if (nav && toggle) {
+    var setOpen = function (open) {
+      nav.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      toggle.innerHTML = open ? '&times;' : '&#9776;';
+      document.body.style.overflow = open ? 'hidden' : '';
+    };
+    toggle.addEventListener('click', function () { setOpen(!nav.classList.contains('open')); });
+    nav.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
+    window.addEventListener('keydown', function (e) { if (e.key === 'Escape' && nav.classList.contains('open')) setOpen(false); });
+  }
 
-    header() {
-      const hdr = $('.site-header');
-      if (!hdr) return;
-      window.addEventListener('scroll', () => {
-        const scrolled = window.scrollY > 2;
-        hdr.style.boxShadow = scrolled ? '0 4px 20px rgba(28,58,94,0.10)' : 'none';
-        hdr.style.background = scrolled
-          ? 'rgba(255,255,255,0.92)'
-          : 'rgba(255,255,255,0.85)';
-      }, { passive: true });
-    },
-
-    footerYear() {
-      const y = new Date().getFullYear();
-      $$('#year').forEach(el => (el.textContent = y));
-    },
-
-    // ── Mobile nav ───────────────────────────────────────────────────────
-
-    navMenu() {
-      const btn = $('.nav-toggle');
-      const nav = $('.nav');
-      if (!btn || !nav) return;
-      btn.addEventListener('click', () => {
-        const open = nav.classList.toggle('open');
-        btn.setAttribute('aria-expanded', String(open));
-      });
-      nav.addEventListener('click', e => {
-        if (e.target.tagName === 'A') {
-          nav.classList.remove('open');
-          btn.setAttribute('aria-expanded', 'false');
+  /* ---- Hero background video: pause control + reduced-motion ---- */
+  var heroVideo = $('#heroVideo');
+  var heroPause = $('#heroPause');
+  if (heroVideo) {
+    if (reduce) {
+      heroVideo.removeAttribute('autoplay');
+      try { heroVideo.pause(); } catch (e) {}
+    }
+    if (heroPause) {
+      var ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+      var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>';
+      heroPause.addEventListener('click', function () {
+        if (heroVideo.paused) {
+          heroVideo.play();
+          heroPause.innerHTML = ICON_PAUSE;
+          heroPause.setAttribute('aria-pressed', 'false');
+          heroPause.setAttribute('aria-label', 'Pause background video');
+        } else {
+          heroVideo.pause();
+          heroPause.innerHTML = ICON_PLAY;
+          heroPause.setAttribute('aria-pressed', 'true');
+          heroPause.setAttribute('aria-label', 'Play background video');
         }
       });
-      // Close nav on outside click
-      document.addEventListener('click', e => {
-        if (nav.classList.contains('open') && !nav.contains(e.target) && e.target !== btn) {
-          nav.classList.remove('open');
-          btn.setAttribute('aria-expanded', 'false');
-        }
-      });
-    },
+    }
+  }
 
-    // ── Service Drawer ────────────────────────────────────────────────────
-
-    drawer() {
-      const drawer = $('#svcDrawer');
-      if (!drawer) return;
-
-      const closeBtn = $('#svcClose');
-      const backdrop = $('#svcBackdrop');
-      const nextBtn = $('#svcNext');
-      const backBtn = $('#svcBack');
-
-      const open = (service, initialData = {}) => {
-        state.drawerOpen = true;
-        state.step = 0;
-        state.data = { ...initialData };
-        state.service = service;
-        drawer.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        $('#svcTitle').textContent = this.serviceMeta(service).title;
-        $('#svcSubtitle').textContent = this.serviceMeta(service).subtitle;
-        this.renderStep();
-        closeBtn.focus();
-        track('service_open', { service });
-      };
-
-      const close = () => {
-        state.drawerOpen = false;
-        drawer.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-      };
-
-      $$('.svc-open').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const service = e.currentTarget.closest('.service-card').dataset.service;
-          open(service);
+  /* ---- Reveal on scroll ---- */
+  var reveals = $$('.reveal');
+  if (reveals.length) {
+    if (reduce || !('IntersectionObserver' in window)) {
+      reveals.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
         });
-      });
+      }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+      reveals.forEach(function (el) { io.observe(el); });
+    }
+  }
 
-      closeBtn.addEventListener('click', close);
-      backdrop.addEventListener('click', close);
+  /* ---- RI product mock animation (home teaser + technology page) ---- */
+  initRiMock();
+  function initRiMock() {
+    var mock = $('#riMock');
+    if (!mock) return;
+    var chatSteps = $$('#riChat .msg', mock);
+    var specSteps = $$('#riSpec [data-step]', mock);
+    var typing = $('#riTyping', mock);
+    var totalEl = $('#riTotal', mock);
+    var chatScroll = $('#riChat', mock);
+    var rafId = null, timers = [], running = false;
 
-      nextBtn.addEventListener('click', () => {
-        if (!this.collectStep()) return;
-        const steps = state.service === 'snow' ? this.snowSteps() : this.renoSteps();
-        if (state.step < steps.length - 1) {
-          state.step++;
-          this.renderStep();
-          return;
-        }
-        // Flow complete — pre-fill contact form
-        const details = this.summary();
-        const field = $('#serviceDetails');
-        if (field) field.value = details;
-        close();
-        location.hash = '#contact';
-        const status = $('#formStatus');
-        if (status) {
-          status.textContent = 'Details added. Fill in your name and email below to send.';
-          status.className = 'form-status';
-        }
-        track('quote_flow_complete', { service: state.service });
-      });
+    function fmt(n) { return '$' + Math.round(n).toLocaleString('en-CA'); }
 
-      backBtn.addEventListener('click', () => {
-        if (state.step > 0) { state.step--; this.renderStep(); }
-      });
+    function showStep(n) {
+      chatSteps.forEach(function (el) { if (+el.getAttribute('data-step') === n) el.classList.add('show'); });
+      specSteps.forEach(function (el) { if (+el.getAttribute('data-step') === n) el.classList.add('show'); });
+      if (chatScroll) requestAnimationFrame(function () { chatScroll.scrollTop = chatScroll.scrollHeight; });
+      var sum = 0;
+      $$('#riSpec .spec-row.show', mock).forEach(function (r) { sum += +(r.getAttribute('data-price') || 0); });
+      countTo(sum);
+    }
 
-      window.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && state.drawerOpen) close();
-      });
-
-      // Expose so snowPlans() can open with a pre-selected plan
-      this._openDrawer = open;
-    },
-
-    serviceMeta(key) {
-      const map = {
-        snow:     { title: 'Snow Removal',               subtitle: 'Pick a plan and add any extras.' },
-        kitchen:  { title: 'Kitchen Cabinet Installation',subtitle: 'A few details to tailor your quote.' },
-        bathroom: { title: 'Bathroom Renovations',        subtitle: 'Tell us about your space and finishes.' },
-        basement: { title: 'Basement Finishing',          subtitle: 'Share your layout and goals.' },
-        flooring: { title: 'Flooring & Painting',         subtitle: 'Square footage and material preferences help.' },
-      };
-      return map[key] || { title: 'Service', subtitle: 'Tell us a bit more.' };
-    },
-
-    renoSteps() {
-      return [
-        // Step 0 — basics
-        svc => `
-          <div class="grid">
-            <label><span>Project Type</span><input value="${this.serviceMeta(svc).title}" disabled></label>
-            <label><span>Approx. Start</span><input type="month" id="startMonth" value="${state.data.startMonth || ''}"></label>
-          </div>
-          <label class="full"><span>Describe your space</span>
-            <textarea id="scope" rows="4" placeholder="Size, layout, existing conditions">${state.data.scope || ''}</textarea>
-          </label>
-        `,
-        // Step 1 — service-specific
-        svc => {
-          const specific = {
-            kitchen: `
-              <div class="grid">
-                <label><span>Cabinet length (ft)</span>
-                  <input type="number" id="k_len" min="0" step="0.1" value="${state.data.k_len || ''}">
-                </label>
-                <label><span>Island?</span>
-                  <select id="k_island">
-                    <option${state.data.k_island === 'No'  ? ' selected' : ''}>No</option>
-                    <option${state.data.k_island === 'Yes' ? ' selected' : ''}>Yes</option>
-                  </select>
-                </label>
-              </div>
-              <label class="full"><span>Style / Material</span>
-                <input id="k_style" placeholder="Shaker, slab, wood species, etc." value="${state.data.k_style || ''}">
-              </label>
-            `,
-            bathroom: `
-              <div class="grid">
-                <label><span>Shower or Tub?</span>
-                  <select id="bathing">
-                    <option${state.data.bathing === 'Shower' ? ' selected' : ''}>Shower</option>
-                    <option${state.data.bathing === 'Tub'    ? ' selected' : ''}>Tub</option>
-                    <option${state.data.bathing === 'Both'   ? ' selected' : ''}>Both</option>
-                  </select>
-                </label>
-                <label><span>Heated floors?</span>
-                  <select id="heat">
-                    <option${state.data.heat === 'No'  ? ' selected' : ''}>No</option>
-                    <option${state.data.heat === 'Yes' ? ' selected' : ''}>Yes</option>
-                  </select>
-                </label>
-              </div>
-              <label class="full"><span>Tile &amp; fixtures</span>
-                <input id="fixtures" placeholder="Tile size, niche, glass, vanity, etc." value="${state.data.fixtures || ''}">
-              </label>
-            `,
-            basement: `
-              <div class="grid">
-                <label><span>Area (sqft)</span>
-                  <input type="number" id="area" min="0" value="${state.data.area || ''}">
-                </label>
-                <label><span>Separate suite?</span>
-                  <select id="suite">
-                    <option${state.data.suite === 'No'  ? ' selected' : ''}>No</option>
-                    <option${state.data.suite === 'Yes' ? ' selected' : ''}>Yes</option>
-                  </select>
-                </label>
-              </div>
-              <label class="full"><span>Rooms</span>
-                <input id="rooms" placeholder="Bedroom, bath, rec, storage, gym, etc." value="${state.data.rooms || ''}">
-              </label>
-            `,
-            flooring: `
-              <div class="grid">
-                <label><span>Area (sqft)</span>
-                  <input type="number" id="f_area" min="0" value="${state.data.f_area || ''}">
-                </label>
-                <label><span>Floor Type</span>
-                  <select id="f_type">
-                    <option${state.data.f_type === 'Laminate' ? ' selected' : ''}>Laminate</option>
-                    <option${state.data.f_type === 'Vinyl'    ? ' selected' : ''}>Vinyl</option>
-                    <option${state.data.f_type === 'Hardwood' ? ' selected' : ''}>Hardwood</option>
-                    <option${state.data.f_type === 'Tile'     ? ' selected' : ''}>Tile</option>
-                  </select>
-                </label>
-              </div>
-              <label class="full"><span>Painting</span>
-                <input id="paint" placeholder="Rooms, walls, ceilings, trim" value="${state.data.paint || ''}">
-              </label>
-            `,
-          };
-          return specific[svc] || '<p class="muted">No additional details needed.</p>';
-        },
-        // Step 2 — budget & timeline
-        () => `
-          <div class="grid">
-            <label><span>Budget Range</span>
-              <select id="budget">
-                <option${state.data.budget === 'Undecided'   ? ' selected' : ''}>Undecided</option>
-                <option${state.data.budget === '$2k–$5k'    ? ' selected' : ''}>$2k&ndash;$5k</option>
-                <option${state.data.budget === '$5k–$15k'   ? ' selected' : ''}>$5k&ndash;$15k</option>
-                <option${state.data.budget === '$15k–$35k'  ? ' selected' : ''}>$15k&ndash;$35k</option>
-                <option${state.data.budget === '$35k+'        ? ' selected' : ''}>$35k+</option>
-              </select>
-            </label>
-            <label><span>Timeline</span>
-              <select id="timeline">
-                <option${state.data.timeline === 'Flexible'    ? ' selected' : ''}>Flexible</option>
-                <option${state.data.timeline === 'ASAP'        ? ' selected' : ''}>ASAP</option>
-                <option${state.data.timeline === '1–3 months' ? ' selected' : ''}>1&ndash;3 months</option>
-                <option${state.data.timeline === '3–6 months' ? ' selected' : ''}>3&ndash;6 months</option>
-              </select>
-            </label>
-          </div>
-        `,
-      ];
-    },
-
-    snowSteps() {
-      return [
-        // Step 0 — pick plan
-        () => {
-          const plans = this.getSnowPlans();
-          return `
-            <div class="cards plans-grid">
-              ${plans.map(p => `
-                <article class="card plan${state.data.plan === p.id ? ' plan-selected' : ''}" data-plan="${p.id}">
-                  <h3>${p.name}</h3>
-                  <div class="price">${p.price.visit} &bull; ${p.price.month} &bull; ${p.price.season}</div>
-                  <ul class="muted">${p.includes.map(i => `<li>${i}</li>`).join('')}</ul>
-                  <button class="btn btn-small choose-plan${state.data.plan === p.id ? ' btn-primary' : ''}" data-plan="${p.id}">
-                    ${state.data.plan === p.id ? '&#10003; Selected' : 'Choose'}
-                  </button>
-                </article>
-              `).join('')}
-            </div>
-          `;
-        },
-        // Step 1 — add-ons
-        () => {
-          const addons = this.getSnowAddons();
-          const selected = state.data.addons || [];
-          return `
-            <div class="card">
-              <h4>Optional Add-Ons</h4>
-              <div class="addons-list">
-                ${addons.map(a => `
-                  <label class="addon-row">
-                    <input type="checkbox" class="addon" value="${a.id}"${selected.includes(a.id) ? ' checked' : ''}>
-                    <div>
-                      <div>${a.name} &mdash; <strong>${a.price}</strong></div>
-                      <div class="muted">${a.desc}</div>
-                    </div>
-                  </label>
-                `).join('')}
-              </div>
-            </div>
-          `;
-        },
-        // Step 2 — property info
-        () => `
-          <div class="grid">
-            <label><span>Driveway size</span>
-              <select id="driveSize">
-                <option${state.data.driveSize === '1–2 cars' ? ' selected' : ''}>1&ndash;2 cars</option>
-                <option${state.data.driveSize === '2–3 cars' ? ' selected' : ''}>2&ndash;3 cars</option>
-                <option${state.data.driveSize === '3+ cars'       ? ' selected' : ''}>3+ cars</option>
-              </select>
-            </label>
-            <label><span>Corner lot?</span>
-              <select id="corner">
-                <option${state.data.corner === 'No'  ? ' selected' : ''}>No</option>
-                <option${state.data.corner === 'Yes' ? ' selected' : ''}>Yes</option>
-              </select>
-            </label>
-          </div>
-          <label class="full"><span>Notes</span>
-            <textarea id="notes" rows="3" placeholder="Stairs, decks, special access, etc.">${state.data.notes || ''}</textarea>
-          </label>
-        `,
-      ];
-    },
-
-    renderStep() {
-      const content = $('#svcContent');
-      const backBtn  = $('#svcBack');
-      const nextBtn  = $('#svcNext');
-      const steps    = state.service === 'snow' ? this.snowSteps() : this.renoSteps();
-      content.innerHTML = steps[state.step](state.service);
-      backBtn.hidden    = state.step === 0;
-      nextBtn.textContent = state.step === steps.length - 1 ? 'Add to Quote' : 'Continue';
-
-      $$('.choose-plan', content).forEach(btn => {
-        btn.addEventListener('click', e => {
-          state.data.plan = e.currentTarget.dataset.plan;
-          state.step = Math.min(state.step + 1, this.snowSteps().length - 1);
-          this.renderStep();
-        });
-      });
-    },
-
-    collectStep() {
-      if (state.service === 'snow') {
-        if (state.step === 0 && !state.data.plan) {
-          this.showDrawerError('Please choose a plan to continue.');
-          return false;
-        }
-        if (state.step === 1) {
-          state.data.addons = $$('.addon').filter(a => a.checked).map(a => a.value);
-        }
-        if (state.step === 2) {
-          state.data.driveSize = $('#driveSize').value;
-          state.data.corner    = $('#corner').value;
-          state.data.notes     = $('#notes').value.trim();
-        }
-        return true;
+    function countTo(target) {
+      if (rafId) cancelAnimationFrame(rafId);
+      var start = parseInt((totalEl.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      var t0 = null, dur = 700;
+      function tick(ts) {
+        if (!t0) t0 = ts;
+        var p = Math.min((ts - t0) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        totalEl.textContent = fmt(start + (target - start) * eased);
+        if (p < 1) rafId = requestAnimationFrame(tick);
       }
-      // Reno
-      if (state.step === 0) {
-        state.data.startMonth = $('#startMonth')?.value || '';
-        state.data.scope      = $('#scope')?.value.trim() || '';
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function reset() {
+      chatSteps.forEach(function (el) { el.classList.remove('show'); });
+      specSteps.forEach(function (el) { el.classList.remove('show'); });
+      if (typing) typing.style.display = 'none';
+      if (totalEl) totalEl.textContent = '$0';
+      if (chatScroll) chatScroll.scrollTop = 0;
+    }
+
+    function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+
+    function play() {
+      timers.forEach(clearTimeout); timers = [];
+      reset();
+      at(300, function () { showStep(0); });
+      at(1000, function () { showStep(1); });
+      at(1800, function () { if (typing) typing.style.display = 'flex'; });
+      at(2900, function () { if (typing) typing.style.display = 'none'; showStep(2); });
+      at(4500, function () { showStep(3); });
+      at(5300, function () { if (typing) typing.style.display = 'flex'; });
+      at(6300, function () { if (typing) typing.style.display = 'none'; showStep(4); });
+      at(9800, play);
+    }
+
+    if (reduce) {
+      [0, 1, 2, 3, 4].forEach(showStep);
+    } else if ('IntersectionObserver' in window) {
+      var mio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting && !running) { running = true; play(); } });
+      }, { threshold: 0.3 });
+      mio.observe(mock);
+    } else {
+      play();
+    }
+  }
+
+  /* ---- Quote page: pre-select project type from ?intent= ---- */
+  (function quoteIntent() {
+    var form = $('#contactForm');
+    if (!form) return;
+    var params = new URLSearchParams(window.location.search);
+    var intent = (params.get('intent') || '').toLowerCase();
+    if (!intent) return;
+    var map = {
+      ri: { match: /early access/i, msg: "I'd like early access to RI (Renovation Intelligence)." },
+      kitchen: { match: /^kitchen$/i },
+      bathroom: { match: /^bathroom$/i },
+      basement: { match: /^basement$/i },
+      flooring: { match: /flooring/i }
+    };
+    var cfg = map[intent];
+    if (!cfg) return;
+    var sel = form.querySelector('[name=project]');
+    if (sel) {
+      for (var i = 0; i < sel.options.length; i++) {
+        if (cfg.match.test(sel.options[i].text)) { sel.selectedIndex = i; break; }
       }
-      if (state.step === 1) {
-        switch (state.service) {
-          case 'kitchen':
-            state.data.k_len    = $('#k_len').value;
-            state.data.k_island = $('#k_island').value;
-            state.data.k_style  = $('#k_style').value.trim();
-            break;
-          case 'bathroom':
-            state.data.bathing  = $('#bathing').value;
-            state.data.heat     = $('#heat').value;
-            state.data.fixtures = $('#fixtures').value.trim();
-            break;
-          case 'basement':
-            state.data.area  = $('#area').value;
-            state.data.suite = $('#suite').value;
-            state.data.rooms = $('#rooms').value.trim();
-            break;
-          case 'flooring':
-            state.data.f_area = $('#f_area').value;
-            state.data.f_type = $('#f_type').value;
-            state.data.paint  = $('#paint').value.trim();
-            break;
-        }
-      }
-      if (state.step === 2) {
-        state.data.budget   = $('#budget').value;
-        state.data.timeline = $('#timeline').value;
-      }
-      return true;
-    },
+    }
+    var msg = form.querySelector('[name=message]');
+    if (cfg.msg && msg && !msg.value) msg.value = cfg.msg;
+    if (intent === 'ri') {
+      var heading = $('#quoteHeading');
+      if (heading) heading.textContent = 'Request early access to RI';
+    }
+  })();
 
-    showDrawerError(msg) {
-      let err = $('#drawerError');
-      if (!err) {
-        err = document.createElement('div');
-        err.id = 'drawerError';
-        err.className = 'drawer-error';
-        err.setAttribute('role', 'alert');
-        $('#svcContent').insertAdjacentElement('afterend', err);
-      }
-      err.textContent = msg;
-      clearTimeout(err._timer);
-      err._timer = setTimeout(() => err.remove(), 4000);
-    },
-
-    summary() {
-      if (state.service === 'snow') {
-        const plan   = this.getSnowPlans().find(p => p.id === state.data.plan);
-        const addons = (state.data.addons || [])
-          .map(id => this.getSnowAddons().find(a => a.id === id)?.name)
-          .filter(Boolean);
-        return [
-          'Service: Snow Removal',
-          `Plan: ${plan ? plan.name : 'N/A'}`,
-          addons.length ? `Add-ons: ${addons.join(', ')}` : null,
-          `Driveway: ${state.data.driveSize || ''}${state.data.corner === 'Yes' ? ', corner lot' : ''}`,
-          state.data.notes ? `Notes: ${state.data.notes}` : null,
-        ].filter(Boolean).join(' | ');
-      }
-      const title = this.serviceMeta(state.service).title;
-      const parts = [`Service: ${title}`];
-      if (state.data.startMonth) parts.push(`Start: ${state.data.startMonth}`);
-      if (state.data.scope)      parts.push(`Scope: ${state.data.scope}`);
-      const svc = state.service;
-      if (svc === 'kitchen')  parts.push(`Length: ${state.data.k_len}ft, Island: ${state.data.k_island}, Style: ${state.data.k_style}`);
-      if (svc === 'bathroom') parts.push(`Bathing: ${state.data.bathing}, Heated: ${state.data.heat}, Fixtures: ${state.data.fixtures}`);
-      if (svc === 'basement') parts.push(`Area: ${state.data.area} sqft, Suite: ${state.data.suite}, Rooms: ${state.data.rooms}`);
-      if (svc === 'flooring') parts.push(`Area: ${state.data.f_area} sqft, Type: ${state.data.f_type}, Painting: ${state.data.paint}`);
-      parts.push(`Budget: ${state.data.budget || 'Undecided'}`, `Timeline: ${state.data.timeline || 'Flexible'}`);
-      return parts.join(' | ');
-    },
-
-    // ── Snow Plans section ────────────────────────────────────────────────
-
-    snowPlans() {
-      const grid = $('#snowPlansGrid');
-      if (!grid) return;
-      grid.innerHTML = this.getSnowPlans().map(p => `
-        <article class="card plan">
-          <h3>${p.name}</h3>
-          <div class="price">${p.price.visit} &bull; ${p.price.month} &bull; ${p.price.season}</div>
-          <ul class="muted">${p.includes.map(i => `<li>${i}</li>`).join('')}</ul>
-          <button class="btn btn-primary btn-small" data-open-snow="${p.id}">Choose ${p.short}</button>
-        </article>
-      `).join('');
-
-      $$('[data-open-snow]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const planId = e.currentTarget.getAttribute('data-open-snow');
-          if (this._openDrawer) this._openDrawer('snow', { plan: planId });
-        });
-      });
-    },
-
-    getSnowPlans() {
-      return [
-        {
-          id: 'basic', short: 'Basic', name: 'Basic Driveway Plan',
-          price: { visit: '$45/visit', month: '$180/month', season: '$600/season' },
-          includes: [
-            '1–2 car driveway',
-            'Cleared within 8 hours after snowfall (≥2")',
-            'Fast and affordable',
-            'No walkway or salting included',
-          ],
-        },
-        {
-          id: 'standard', short: 'Standard', name: 'Standard Home Plan',
-          price: { visit: '$55/visit', month: '$220/month', season: '$750/season' },
-          includes: [
-            'Driveway clearing (up to 2 cars)',
-            'Walkway to main door',
-            'Basic walkway salting',
-            'Service after snowfall ≥2"',
-            'Good coverage at fair cost',
-          ],
-        },
-        {
-          id: 'premium', short: 'Premium', name: 'Premium Coverage Plan',
-          price: { visit: '$70/visit', month: '$280/month', season: '$950/season' },
-          includes: [
-            'Driveway, walkway, and full front sidewalk',
-            'Porch and stairs cleared',
-            'Salt/calcium chloride on all surfaces',
-            'Priority service after major snowfalls',
-          ],
-        },
-        {
-          id: 'commercial', short: 'Commercial', name: 'Commercial / Apartment Plan',
-          price: { visit: 'From $150/visit', month: '$500+/month', season: 'By quote' },
-          includes: [
-            'Parking lots, storefronts, building sidewalks',
-            'Drive lanes, loading zones, walkways',
-            'Full salting coverage',
-            'Optional night or early-morning service',
-          ],
-        },
-      ];
-    },
-
-    getSnowAddons() {
-      return [
-        { id: 'extra-salt', name: 'Extra salting (per visit)', price: '+$10–$15', desc: 'After freezing rain or refreeze' },
-        { id: 'refreeze',   name: 'Refreeze monitoring',       price: '+$15/month',   desc: 'One free return after melt/refreeze' },
-        { id: 'priority',   name: 'Priority route',            price: '+$20/month',   desc: 'Guaranteed service within first 3 hours' },
-        { id: 'roof-deck',  name: 'Roof or deck clearing',     price: 'From $100',    desc: 'Upon request; quote per property' },
-      ];
-    },
-
-    // ── Contact Form ──────────────────────────────────────────────────────
-
-    contactForm() {
-      const form = $('#contactForm');
-      if (!form) return;
-      form.addEventListener('submit', e => this.handleContactSubmit(e));
-    },
-
-    async handleContactSubmit(e) {
+  /* ---- Contact / quote form (Web3Forms) ---- */
+  (function contactForm() {
+    var form = $('#contactForm');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
       e.preventDefault();
-      const form      = e.target;
-      const status    = $('#formStatus');
-      const submitBtn = form.querySelector('[type="submit"]');
+      var status = $('#formStatus');
+      var submitBtn = form.querySelector('[type=submit]');
 
-      // Clear previous errors
-      $$('.field-error', form).forEach(el => el.remove());
-      $$('.input-error', form).forEach(el => el.classList.remove('input-error'));
+      $$('.field-error', form).forEach(function (el) { el.remove(); });
+      $$('.input-error', form).forEach(function (el) { el.classList.remove('input-error'); });
 
-      const data   = Object.fromEntries(new FormData(form));
-      const errors = this.validateContactForm(data);
+      var data = {};
+      new FormData(form).forEach(function (v, k) { data[k] = v; });
+      var errors = [];
+      if (!String(data.name || '').trim()) errors.push({ field: 'name', msg: 'Name is required.' });
+      if (!String(data.email || '').trim()) errors.push({ field: 'email', msg: 'Email is required.' });
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(data.email).trim())) errors.push({ field: 'email', msg: 'Please enter a valid email address.' });
 
       if (errors.length) {
-        errors.forEach(({ field, msg }) => {
-          const input = form.querySelector(`[name="${field}"]`);
+        errors.forEach(function (er) {
+          var input = form.querySelector('[name="' + er.field + '"]');
           if (!input) return;
           input.classList.add('input-error');
-          const errEl = document.createElement('span');
-          errEl.className = 'field-error';
-          errEl.textContent = msg;
-          input.insertAdjacentElement('afterend', errEl);
+          var span = document.createElement('span');
+          span.className = 'field-error';
+          span.textContent = er.msg;
+          input.insertAdjacentElement('afterend', span);
         });
-        form.querySelector('.input-error')?.focus();
+        var firstBad = form.querySelector('.input-error');
+        if (firstBad) firstBad.focus();
         return;
       }
 
-      submitBtn.disabled      = true;
-      submitBtn.textContent   = 'Sending…';
-      status.textContent      = '';
-      status.className        = 'form-status';
+      submitBtn.disabled = true;
+      var origLabel = submitBtn.innerHTML;
+      submitBtn.textContent = 'Sending…';
+      if (status) { status.textContent = ''; status.className = 'form-status'; }
 
-      try {
-        const payload = {
-          access_key:      WEB3FORMS_KEY,
-          subject:         'Quote Request — Renoriser',
-          from_name:       data.name.trim(),
-          email:           data.email.trim(),
-          phone:           data.phone    || '',
-          address:         data.address  || '',
-          service_details: data.serviceDetails || '',
-          message:         data.message  || '',
+      var payload = {
+        access_key: WEB3FORMS_KEY,
+        subject: 'Quote Request — Renoriser',
+        from_name: String(data.name).trim(),
+        email: String(data.email).trim(),
+        phone: data.phone || '',
+        project_type: data.project || '',
+        message: data.message || ''
+      };
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (json) {
+          if (json.success) {
+            if (status) { status.textContent = "✓ Request sent! We'll be in touch within 24 hours."; status.className = 'form-status success'; }
+            form.reset();
+            track('quote_submitted', { project: payload.project_type || 'unspecified' });
+          } else {
+            throw new Error(json.message || 'Submission failed');
+          }
+        })
+        .catch(function () {
+          if (status) { status.textContent = 'Something went wrong. Please email us directly at renoriser@outlook.com'; status.className = 'form-status error'; }
+        })
+        .then(function () {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = origLabel;
+        });
+    });
+  })();
+
+  /* ---- Work page: project gallery (before/after grouped) ---- */
+  var lbState = { items: [], idx: 0 };
+
+  function isVideoSrc(src) { return /\.(mp4|webm|ogg)$/i.test(src); }
+  function mediaTag(src, label) {
+    if (isVideoSrc(src)) return '<video src="' + src + '" muted playsinline loop preload="metadata"></video>';
+    return '<img src="' + src + '" alt="' + label + ' photo" loading="lazy">';
+  }
+
+  (function projectGallery() {
+    var grid = $('#projectGrid');
+    if (!grid) return;
+
+    fetch(MANIFEST_URL)
+      .then(function (r) { if (!r.ok) throw new Error('manifest not found'); return r.json(); })
+      .then(function (data) {
+        var projects = (data && data.projects) || [];
+        if (!projects.length) { grid.innerHTML = '<p class="muted">Projects coming soon.</p>'; return; }
+
+        grid.innerHTML = projects.map(function (p, pi) {
+          var after = p.after || [], before = p.before || [];
+          var hero = after[0] || before[0] || '';
+          var extra = Math.max(after.length - 1, 0);
+          var label = p.title || p.type || p.location || 'Project';
+          var beforeHtml = before.length
+            ? '<button class="proj-before-toggle" data-project="' + pi + '" aria-expanded="false">See before (' + before.length + ')</button>'
+              + '<div class="proj-before" hidden>'
+              + before.map(function (b, bi) {
+                  return '<button class="proj-thumb" data-project="' + pi + '" data-index="' + (after.length + bi) + '" aria-label="View before photo">' + mediaTag(b, 'Before') + '</button>';
+                }).join('')
+              + '</div>'
+            : '';
+          return '<article class="proj-card">'
+            + '<button class="proj-hero" data-project="' + pi + '" data-index="0" aria-label="Open ' + label + ' photos">'
+            + mediaTag(hero, 'After')
+            + '<span class="proj-stage after">After</span>'
+            + (extra > 0 ? '<span class="proj-count">+' + extra + ' more</span>' : '')
+            + '</button>'
+            + '<div class="proj-meta">'
+            + (p.type ? '<div class="proj-type">' + p.type + '</div>' : '')
+            + '<div class="proj-loc"><span class="pin"></span> ' + (p.title || p.location || '') + '</div>'
+            + '</div>'
+            + beforeHtml
+            + '</article>';
+        }).join('');
+
+        var listFor = function (pi) {
+          var p = projects[pi]; return (p.after || []).concat(p.before || []);
         };
 
-        const res  = await fetch('https://api.web3forms.com/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const json = await res.json();
-
-        if (json.success) {
-          status.textContent = "✓ Request sent! We’ll be in touch shortly.";
-          status.className   = 'form-status success';
-          form.reset();
-          track('quote_submitted', { method: data.serviceDetails ? 'drawer' : 'direct' });
-        } else {
-          throw new Error(json.message || 'Submission failed');
-        }
-      } catch {
-        status.textContent = 'Something went wrong. Please email us directly at renoriser@outlook.com';
-        status.className   = 'form-status error';
-      } finally {
-        submitBtn.disabled    = false;
-        submitBtn.textContent = 'Request Quote';
-      }
-    },
-
-    validateContactForm(data) {
-      const errors = [];
-      if (!data.name?.trim()) {
-        errors.push({ field: 'name', msg: 'Name is required.' });
-      }
-      if (!data.email?.trim()) {
-        errors.push({ field: 'email', msg: 'Email is required.' });
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
-        errors.push({ field: 'email', msg: 'Please enter a valid email address.' });
-      }
-      return errors;
-    },
-
-    // ── Gallery / Work Page ───────────────────────────────────────────────
-
-    openLightboxFor(item) {
-      const src       = item.dataset.src;
-      const mediaType = item.dataset.mediatype || 'img';
-      const lb        = $('#lightbox');
-      const content   = $('#lightboxContent');
-      if (!lb || !content) return;
-
-      content.innerHTML = '';
-
-      if (mediaType === 'video') {
-        const vid = document.createElement('video');
-        vid.src = src; vid.controls = true; vid.autoplay = true; vid.playsInline = true;
-        content.appendChild(vid);
-      } else {
-        const wrap = document.createElement('div');
-        wrap.className = 'lb-image';
-        const img = document.createElement('img');
-        img.src = src; img.alt = 'Project photo';
-        wrap.appendChild(img);
-        content.appendChild(wrap);
-      }
-
-      lb.setAttribute('aria-hidden', 'false');
-      $('#lightboxClose')?.focus();
-    },
-
-    lightbox() {
-      const lb = $('#lightbox');
-      if (!lb) return;
-      const close = () => lb.setAttribute('aria-hidden', 'true');
-      $('#lightboxClose').addEventListener('click', close);
-      $('#lightboxBackdrop').addEventListener('click', close);
-      window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-    },
-
-    locations() {
-      const cards = $('#locCards');
-      if (!cards) return;
-
-      const gallery = $('#locGallery');
-      const head    = $('#locHead');
-      const title   = $('#locTitle');
-
-      fetch(MANIFEST_URL)
-        .then(r => {
-          if (!r.ok) throw new Error('manifest not found');
-          return r.json();
-        })
-        .then(manifest => {
-          cards.innerHTML = Object.entries(manifest).map(([key, items]) => {
-            const cover = items.find(m => m.type === 'img');
-            const bgStyle = cover
-              ? `style="background:url('${cover.src}') center/cover no-repeat, linear-gradient(180deg,#2c5d8f,#1c3a5e)"`
-              : '';
-            const label = LOC_LABELS[key] || key;
-            return `
-              <article class="loc-card" data-loc="${key}" ${bgStyle} tabindex="0" role="button" aria-label="Open ${label} gallery">
-                <div class="meta">${label}</div>
-                <div>
-                  <div class="title">${label}</div>
-                  <div class="count">${items.length} item${items.length === 1 ? '' : 's'}</div>
-                </div>
-              </article>
-            `;
-          }).join('');
-
-          const openGallery = card => {
-            const key   = card.getAttribute('data-loc');
-            const items = manifest[key] || [];
-            title.textContent = LOC_LABELS[key] || key;
-            head.style.display = '';
-
-            gallery.innerHTML = items.map(m => {
-              const isAfter     = m.stage === 'A';
-              const stageLabel  = isAfter ? 'After' : 'Before';
-              const stageClass  = isAfter ? 'after' : 'before';
-              if (m.type === 'img') {
-                return `
-                  <figure class="gal-item" data-mediatype="img" data-src="${m.src}">
-                    <span class="badge ${stageClass}">${stageLabel}</span>
-                    <img src="${m.src}" alt="${stageLabel} photo" loading="lazy">
-                    <figcaption>${stageLabel}</figcaption>
-                  </figure>
-                `;
-              }
-              return `
-                <figure class="gal-item" data-mediatype="video" data-src="${m.src}">
-                  <span class="badge ${stageClass}">${stageLabel}</span>
-                  <video src="${m.src}" muted playsinline loop></video>
-                  <figcaption>Video &mdash; ${stageLabel}</figcaption>
-                </figure>
-              `;
-            }).join('');
-
-            $$('.gal-item', gallery).forEach(item => {
-              item.addEventListener('click', () => this.openLightboxFor(item));
-            });
-
-            head.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          };
-
-          $$('.loc-card', cards).forEach(card => {
-            card.addEventListener('click', () => openGallery(card));
-            card.addEventListener('keydown', e => {
-              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGallery(card); }
-            });
+        $$('.proj-hero, .proj-thumb', grid).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            openLightbox(listFor(+btn.getAttribute('data-project')), +btn.getAttribute('data-index'));
           });
-        })
-        .catch(() => {
-          cards.innerHTML = '<p class="muted">Unable to load projects. Please try again later.</p>';
         });
-    },
-  };
 
-  document.addEventListener('DOMContentLoaded', () => App.init());
+        $$('.proj-before-toggle', grid).forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var panel = btn.nextElementSibling;
+            if (!panel) return;
+            var hidden = panel.hasAttribute('hidden');
+            if (hidden) { panel.removeAttribute('hidden'); btn.setAttribute('aria-expanded', 'true'); btn.textContent = btn.textContent.replace('See', 'Hide'); }
+            else { panel.setAttribute('hidden', ''); btn.setAttribute('aria-expanded', 'false'); btn.textContent = btn.textContent.replace('Hide', 'See'); }
+          });
+        });
+      })
+      .catch(function () {
+        grid.innerHTML = '<p class="muted">Unable to load projects. Please try again later.</p>';
+      });
+  })();
+
+  /* ---- Lightbox with prev/next over a project's photos ---- */
+  function renderLb() {
+    var content = $('#lightboxContent');
+    if (!content) return;
+    var src = lbState.items[lbState.idx];
+    content.innerHTML = '';
+    if (!src) return;
+    if (isVideoSrc(src)) {
+      var v = document.createElement('video');
+      v.src = src; v.controls = true; v.autoplay = true; v.playsInline = true;
+      content.appendChild(v);
+    } else {
+      var wrap = document.createElement('div'); wrap.className = 'lb-image';
+      var img = document.createElement('img'); img.src = src; img.alt = 'Project photo';
+      wrap.appendChild(img); content.appendChild(wrap);
+    }
+    var multi = lbState.items.length > 1;
+    ['#lbPrev', '#lbNext'].forEach(function (s) { var el = $(s); if (el) el.style.display = multi ? '' : 'none'; });
+  }
+  function openLightbox(items, idx) {
+    var lb = $('#lightbox');
+    if (!lb) return;
+    lbState.items = items || [];
+    lbState.idx = idx || 0;
+    renderLb();
+    lb.setAttribute('aria-hidden', 'false');
+    var close = $('#lightboxClose'); if (close) close.focus();
+  }
+  function lbStep(d) {
+    if (!lbState.items.length) return;
+    lbState.idx = (lbState.idx + d + lbState.items.length) % lbState.items.length;
+    renderLb();
+  }
+  (function lightboxInit() {
+    var lb = $('#lightbox');
+    if (!lb) return;
+    var close = function () {
+      lb.setAttribute('aria-hidden', 'true');
+      var c = $('#lightboxContent'); if (c) c.innerHTML = '';
+    };
+    var cb = $('#lightboxClose'); if (cb) cb.addEventListener('click', close);
+    var bd = $('#lightboxBackdrop'); if (bd) bd.addEventListener('click', close);
+    var pv = $('#lbPrev'); if (pv) pv.addEventListener('click', function (e) { e.stopPropagation(); lbStep(-1); });
+    var nx = $('#lbNext'); if (nx) nx.addEventListener('click', function (e) { e.stopPropagation(); lbStep(1); });
+    window.addEventListener('keydown', function (e) {
+      if (lb.getAttribute('aria-hidden') === 'true') return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') lbStep(-1);
+      else if (e.key === 'ArrowRight') lbStep(1);
+    });
+  })();
+
 })();

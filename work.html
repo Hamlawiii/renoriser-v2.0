@@ -1,93 +1,114 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Our Work — Renoriser</title>
-    <meta name="description" content="Explore recent renovation projects by location: Hamilton and Burlington." />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css" />
-    <link rel="icon" type="image/jpeg" href="images/ri-mark.jpeg" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17649734991"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);} // eslint-disable-line
-      gtag('js', new Date());
-      gtag('config', 'AW-17649734991');
-    </script>
-  </head>
-  <body class="work-page">
-    <header class="site-header">
-      <div class="container header-inner">
-        <a class="brand" href="./">
-          <img class="brand-mark" src="images/ri-mark.jpeg" alt="Renoriser"/>
-          <span class="brand-lockup">
-            <span class="brand-name">Renoriser</span>
-            <span class="brand-sub">Construction &amp; Technology</span>
-          </span>
-        </a>
-        <nav class="nav">
-          <a href="index.html#services">Services</a>
-          <a class="active" href="#">Our Work</a>
-          <a href="index.html#snow">Snow Plans</a>
-          <a href="index.html#technology">Technology</a>
-          <a href="index.html#contact" class="btn btn-primary btn-small">Get a Quote</a>
-        </nav>
-        <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
-      </div>
-    </header>
-
-    <main>
-      <section class="section hero-slim">
-        <div class="container">
-          <h1>Our Work</h1>
-          <p>Browse projects by location. Click any card to open the gallery.</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="container">
-          <div class="section-head">
-            <h2>Projects by Location</h2>
-            <p>We currently feature projects in Hamilton and Burlington.</p>
-          </div>
-          <div class="cards loc-cards" id="locCards">
-            <p class="muted">Loading projects&hellip;</p>
-          </div>
-          <div class="section-head" id="locHead" style="display:none; margin-top:1.4rem;">
-            <h3 id="locTitle">Location Gallery</h3>
-          </div>
-          <div class="gallery" id="locGallery"></div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <div class="brandline">
-          <img class="brand-mark" src="images/ri-mark.jpeg" alt="Renoriser" />
-          <span class="brandline-name">Renoriser</span>
-          <span class="brandline-sub">&middot; Construction &amp; Technology</span>
-        </div>
-        <div class="footer-links">
-          <a href="./">Home</a>
-          <a href="index.html#services">Services</a>
-          <a href="index.html#contact">Contact</a>
-        </div>
-        <div class="copyright">&copy; <span id="year"></span> Renoriser. All rights reserved.</div>
-      </div>
-    </footer>
-
-    <!-- Lightbox Modal -->
-    <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog">
-      <button class="lightbox-close" id="lightboxClose" aria-label="Close">×</button>
-      <div class="lightbox-content" id="lightboxContent"></div>
-      <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Our Work — Renoriser</title>
+  <meta name="description" content="Explore recent renovation projects by location: Hamilton and Burlington." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" type="image/jpeg" href="images/ri-mark.jpeg" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17649734991"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} // eslint-disable-line
+    gtag('js', new Date());
+    gtag('config', 'AW-17649734991');
+  </script>
+</head>
+<body class="work-page">
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Renoriser home">
+        <img class="brand-mark" src="images/ri-mark.jpeg" alt="Renoriser" />
+        <span class="brand-lockup"><span class="brand-name">Renoriser</span><span class="brand-sub">Construction &amp; Technology</span></span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Primary">
+        <a href="services.html">Services</a>
+        <a href="work.html" class="active">Our Work</a>
+        <a href="technology.html">Technology</a>
+        <a href="quote.html" class="btn btn-primary btn-small">Get a Quote</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav">&#9776;</button>
     </div>
+  </header>
 
-    <script src="assets/js/main.js"></script>
-  </body>
-  </html>
+  <main>
+    <section class="page-hero bp-grid">
+      <div class="container">
+        <span class="eyebrow">Our work</span>
+        <h1>Real projects. Real results.</h1>
+        <p>Browse projects by location. Click any card to open the gallery.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head" style="margin-bottom:1.6rem;">
+          <h2>Before &amp; after</h2>
+          <p>Each project shows the finished result — tap &ldquo;See before&rdquo; to reveal where it started.</p>
+        </div>
+        <div class="proj-grid" id="projectGrid">
+          <p class="muted">Loading projects&hellip;</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section cta-banner">
+      <div class="container">
+        <h2>Like what you see?</h2>
+        <p>Let's talk about your space — we'll send a clear, itemized quote within 24 hours.</p>
+        <a href="quote.html" class="btn btn-primary btn-large">Get a Free Quote <svg class="arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">
+            <img class="brand-mark" src="images/ri-mark.jpeg" alt="Renoriser" />
+            <span class="brand-lockup"><span class="brand-name">Renoriser</span><span class="brand-sub">Construction &amp; Technology</span></span>
+          </div>
+          <p class="footer-blurb">A Hamilton &amp; Burlington renovation company building RI — the AI behind smarter, clearer home projects.</p>
+          <div class="footer-contact">
+            <a href="tel:+13654769000">(365) 476-9000</a>
+            <a href="mailto:renoriser@outlook.com">renoriser@outlook.com</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <a href="index.html">Home</a>
+          <a href="services.html">Services</a>
+          <a href="work.html">Our Work</a>
+          <a href="technology.html">Technology</a>
+          <a href="quote.html">Get a Quote</a>
+        </div>
+        <div class="footer-col">
+          <h4>Service area</h4>
+          <p>Proudly serving Hamilton, Burlington, and the surrounding communities in Ontario with full-service renovations and seasonal maintenance.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="year"></span> Renoriser — Construction &amp; Technology. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · Hamilton · Burlington, ON</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-label="Project photo viewer">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Close">×</button>
+    <button class="lightbox-nav prev" id="lbPrev" aria-label="Previous photo">&#8249;</button>
+    <button class="lightbox-nav next" id="lbNext" aria-label="Next photo">&#8250;</button>
+    <div class="lightbox-content" id="lightboxContent"></div>
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+  </div>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

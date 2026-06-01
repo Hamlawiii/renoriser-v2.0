@@ -1,101 +1,118 @@
 # Renoriser
 
-Marketing website for **Renoriser — Construction & Technology**, a Hamilton & Burlington based renovation and snow-removal company that's also building **RI (Renovation Intelligence)**, an AI design + estimating platform (coming soon).
+Marketing website for **Renoriser — Construction & Technology**, a Hamilton & Burlington renovation company that's also building **RI (Renovation Intelligence)**, an AI design + estimating platform (coming soon).
 
 **Live site:** [renoriser.ca](https://renoriser.ca)
 
-The site is intentionally split in tone: established trades work up front (services, portfolio, snow plans), and a forward-looking **Technology** section that introduces RI as the company's technology story — currently a *coming soon* teaser.
+The site is conversion-first, built for a skeptical homeowner researching contractors: every section either builds trust or removes friction toward the two goals — **see the work** and **request a quote**. A forward-looking **Technology** section introduces RI as the company's technology story (currently a *coming soon* teaser).
 
 ---
 
 ## Stack
 
 - Vanilla HTML, CSS, JavaScript (no frameworks, no build step)
-- [Web3Forms](https://web3forms.com) for contact-form submissions
+- [Web3Forms](https://web3forms.com) for quote-form submissions
 - Google Ads (`gtag`) for conversion tracking
 - Hosted statically — deploy anywhere (GitHub Pages, Netlify, Vercel, etc.)
 
 ---
 
-## Brand & Design System — "Crisp Blueprint White"
-
-The site shares its visual identity with **RI**: navy + mid-blue + sky on light surfaces, Inter, and a blueprint-grid motif.
-
-| Token | Value | Use |
-|---|---|---|
-| `--navy` | `#1c3a5e` | Headings, wordmark, gradient base |
-| `--brand` | `#2c5d8f` | Primary accent, links, focus rings |
-| `--sky` | `#5b9bd5` | Secondary accent |
-| `--ink` / `--ink-muted` | `#0f172a` / `#64748b` | Body / secondary text |
-| `--page` / `--canvas` / `--surface` | `#f8fafc` / `#f0f4f8` / `#fff` | Page / section / card backgrounds |
-| `--edge` | `#e2e8f0` | Borders |
-
-All tokens live in `:root` at the top of [`assets/css/styles.css`](assets/css/styles.css). Primary CTAs use the navy gradient (`--grad-navy`); cards use the layered `--shadow-card`; the hero and Technology sections use the blueprint-grid + mesh-gradient backdrop.
-
-**Brand lockup:** the RI emblem (`images/ri-mark.jpeg`) + **Renoriser** wordmark + **Construction & Technology** sub-label, in both header and footer. The emblem is an off-white JPEG rendered with `mix-blend-mode: multiply` so its background melts into light surfaces. (`images/logo.png` is the legacy "Reno Riser" mark, kept for reference but no longer used.)
-
----
-
 ## Pages
+
+A multi-page site sharing one stylesheet ([`assets/css/styles.css`](assets/css/styles.css)) and one script ([`assets/js/main.js`](assets/js/main.js)). Each module in the JS feature-detects by element presence, so the single file serves every page.
 
 | File | Description |
 |------|-------------|
-| `index.html` | Home — hero, services, snow plans, about, **Technology (RI teaser)**, contact form |
-| `work.html` | Portfolio — location cards + photo/video gallery |
+| `index.html` | Home — hero, trust bar, services overview, work teaser, RI technology teaser, promise/social proof, final CTA, footer |
+| `services.html` | Kitchens, bathrooms, basements, flooring & painting (anchored), plus the snow-removal retention note |
+| `technology.html` | RI / Renovation Intelligence — full animated product mock, feature rows, teaser video, early-access CTA |
+| `work.html` | Portfolio — project-based before/after gallery with lightbox |
+| `quote.html` | Quote form (Web3Forms), `?intent=` pre-selection, PIPEDA consent |
+| `privacy.html` | Basic PIPEDA privacy policy |
+
+Navigation is deliberately 4 items — **Services · Our Work · Technology · Get a Quote**. Snow removal is intentionally **not** in the nav (see below).
 
 ---
 
-## The Technology / RI section
+## Brand & Design System — "Crisp Blueprint White"
 
-The `#technology` section on `index.html` positions Renoriser as a Construction **& Technology** company and teases RI. The framed media slot plays the teaser at `videos/teaser.mp4`:
+The site shares its visual identity with **RI**: navy + mid-blue + sky on light surfaces, Inter, and a blueprint-grid motif. All tokens live in `:root` at the top of [`assets/css/styles.css`](assets/css/styles.css).
 
-```html
-<video class="hero-video" autoplay muted playsinline loop controls preload="metadata">
-  <source src="videos/teaser.mp4" type="video/mp4" />
-</video>
-```
+| Token | Value | Use |
+|---|---|---|
+| `--brand-navy` | `#1c3a5e` | Headings, wordmark, gradient base |
+| `--brand` | `#2c5d8f` | Primary accent, links, focus rings |
+| `--brand-sky` | `#5b9bd5` | Secondary accent |
+| `--ink` / `--ink-muted` | `#0f172a` / `#64748b` | Body / secondary text |
+| `--surface` / `--surface-page` / `--surface-page-2` | `#fff` / `#f8fafc` / `#f0f4f8` | Card / page / section backgrounds |
+| `--edge` | `#e2e8f0` | Borders |
 
-It autoplays muted (so it previews silently) and loops, with native controls so visitors can unmute, scrub, or replay. The frame has a navy background, so there's no white flash before the first frame paints — no poster image is required. To swap the teaser later, just replace `videos/teaser.mp4` (or change the `<source>` path).
+Primary CTAs use the navy gradient (`--grad-brand`); the blueprint-grid backdrop (`.bp-grid`) appears behind the hero and technology sections.
 
-The **"Request early access"** button scrolls to the contact form and pre-fills the message, so interest is captured through the existing Web3Forms flow — no backend required.
-
----
-
-## Adding New Project Photos
-
-Photos are loaded from `images/manifest.json` — just a plain list, no magic.
-
-**Naming convention:**
-
-```
-[Location][Stage][Number].jpeg
-
-Location:  H = Hamilton job 1 | T = Hamilton job 2 | B = Burlington
-Stage:     A = After           | B = Before
-Number:    1, 2, 3 …
-
-Examples:  HA13.jpeg  (Hamilton job 1, after, photo 13)
-           BB6.jpeg   (Burlington, before, photo 6)
-```
-
-**Steps to add photos:**
-
-1. Drop the image files into `images/` using the naming convention above.
-2. Open `images/manifest.json` and add an entry in the correct location block:
-
-   ```json
-   { "type": "img", "src": "images/HA13.jpeg", "stage": "A" }
-   ```
-
-Use `"stage": "A"` for After photos and `"stage": "B"` for Before. Videos follow the same pattern with `"type": "video"` and a path under `videos/`.
+**Brand lockup:** the RI emblem (`images/ri-mark.jpeg`) + **Renoriser** wordmark + **Construction & Technology** sub-label, in header and footer. The emblem is an off-white JPEG rendered with `mix-blend-mode: multiply` so its background melts into light surfaces. (`images/logo.png` is the legacy "Reno Riser" mark, kept for reference but no longer used.)
 
 ---
 
-## Contact Form
+## Hero
 
-Form submissions are sent via [Web3Forms](https://web3forms.com) (free, no backend required). The submission subject is `Quote Request — Renoriser`.
+The home hero is a full-bleed photo (`images/BA1.jpeg`) with a dark overlay (for WCAG-AA text contrast) and a slow **Ken Burns** drift so the still feels alive. The drift is CSS-only and disabled under `prefers-reduced-motion`.
 
-The access key is set at the top of `assets/js/main.js`. To change the destination email, register a new key at [web3forms.com](https://web3forms.com) and replace the `WEB3FORMS_KEY` value.
+To use **video** instead, swap the `<img class="home-hero__bg">` in `index.html` for a `<video class="home-hero__video" id="heroVideo">` (drop your clip at `videos/renoriser-hero.mp4` or reuse `videos/3.mp4`) and re-add the `<button class="hero-pause">`. The CSS and JS for the video path (mobile fallback, pause control, reduced-motion) are already in place.
+
+---
+
+## Services & Snow Removal
+
+Four core trades are promoted: **Kitchens, Bathrooms, Basements, Flooring & Painting**. Homepage service cards link to `services.html#anchor` (not straight to the quote) — the correct funnel depth.
+
+**Snow removal** is positioned as a *retention* service, not a promoted one: a single section on `services.html` (`#snow`) framed as winter coverage for **existing clients**. It's not in the nav and not a homepage card.
+
+---
+
+## Technology / RI section
+
+`technology.html` is the centerpiece for the tech story: an authentic, animated mock of the RI product — a chat pane where you describe a kitchen and a live "Materials & Spec Sheet" builds itself row-by-row with a CAD total that counts up. A compact version of the same mock appears as a teaser on the homepage. The `videos/teaser.mp4` clip plays below as a "Sneak peek."
+
+The **"Request early access"** CTAs link to `quote.html?intent=ri`, which pre-selects the RI project type and pre-fills the message.
+
+---
+
+## Our Work — project-based gallery
+
+The gallery is organized by **project**, so each job shows its before *and* after together (no more "all afters in one pile, all befores in another"). Projects load from [`images/manifest.json`](images/manifest.json).
+
+**Manifest schema:**
+
+```json
+{
+  "projects": [
+    {
+      "title": "Kitchen Remodel",
+      "location": "Hamilton",
+      "type": "Kitchen",
+      "after":  ["images/HA1.jpeg", "images/HA2.jpeg"],
+      "before": ["images/HB1.jpeg"]
+    }
+  ]
+}
+```
+
+- `after` / `before` are ordered lists of file paths under `images/` or `videos/`.
+- Any `.mp4` (or `.webm`/`.ogg`) path renders as a video automatically — works in either list.
+- The first `after` becomes the card's hero image; the rest show as "+N more".
+- Each card features the afters; a **"See before"** toggle reveals that project's before thumbnails. Clicking any photo opens a lightbox with ‹ › arrow + keyboard navigation through the project's full set.
+
+**To add a project:** drop the photos into `images/` and add a project object to the manifest. Filenames are free-form (the old `[Location][Stage][Number]` convention still works but isn't required by the schema).
+
+---
+
+## Quote form
+
+Submissions are sent via [Web3Forms](https://web3forms.com) (free, no backend) with the subject `Quote Request — Renoriser`, and fire a Google Ads conversion event. The access key is the `WEB3FORMS_KEY` constant at the top of [`assets/js/main.js`](assets/js/main.js) — register a new key at [web3forms.com](https://web3forms.com) to change the destination email.
+
+`quote.html` reads a `?intent=` query param (`ri`, `kitchen`, `bathroom`, `basement`, `flooring`) to pre-select the project type and, for RI, pre-fill the message and re-title the form.
+
+A PIPEDA consent line under the form links to `privacy.html`.
 
 ---
 
@@ -103,28 +120,32 @@ The access key is set at the top of `assets/js/main.js`. To change the destinati
 
 ```
 renoriser2/
-├── index.html              ← hero, services, snow, about, technology (RI teaser), contact
-├── work.html               ← portfolio gallery
+├── index.html              ← home (9-section conversion layout)
+├── services.html           ← services + snow retention note
+├── technology.html         ← RI / Renovation Intelligence
+├── work.html               ← before/after project gallery
+├── quote.html              ← quote form (Web3Forms + gtag + ?intent=)
+├── privacy.html            ← PIPEDA privacy policy
 ├── assets/
-│   ├── css/styles.css      ← "Crisp Blueprint White" design system (tokens in :root)
-│   └── js/main.js          ← drawer, snow builder, contact form, gallery, lightbox
+│   ├── css/styles.css      ← "Crisp Blueprint White" design system + all components
+│   └── js/main.js          ← nav, hero, reveals, RI mock, quote form, gallery, lightbox
 ├── images/
-│   ├── ri-mark.jpeg        ← RI emblem used in the brand lockup (shared with RI)
+│   ├── ri-mark.jpeg        ← RI emblem used in the brand lockup
 │   ├── logo.png            ← legacy "Reno Riser" mark (unused)
-│   ├── manifest.json       ← gallery index (edit this when adding photos)
-│   ├── HA*/HB*/TA*/TB*/BA*/BB*.jpeg   ← project photos (see naming convention)
-│   └── (service icons, about, etc.)
+│   ├── manifest.json       ← project-based gallery index (edit this to add work)
+│   ├── BA1.jpeg            ← hero photo
+│   └── (project photos, about, etc.)
 └── videos/
-    ├── 3.mp4               ← hero background video
-    ├── teaser.mp4          ← RI teaser shown in the Technology section
-    └── TA1.mp4, TB1–2.mp4
+    ├── 3.mp4               ← available for a video hero
+    ├── teaser.mp4          ← RI teaser shown on the Technology page
+    └── TA1.mp4, TB1–2.mp4  ← project gallery videos
 ```
 
 ---
 
 ## Deployment
 
-No build step needed — just upload the files.
+No build step — just upload the files.
 
 **GitHub Pages:**
 1. Push to `main`
@@ -135,12 +156,10 @@ No build step needed — just upload the files.
 
 ---
 
-## Services
+## Accessibility & SEO notes
 
-- Snow Removal (Basic, Standard, Premium, Commercial plans)
-- Kitchen Cabinet Installation
-- Bathroom Renovations
-- Basement Finishing
-- Flooring & Painting
-
-**Service areas:** Hamilton and Burlington, Ontario
+- Full-screen overlay mobile menu with large (≥48px) tap targets.
+- `prefers-reduced-motion` disables the hero drift, scroll reveals, and the RI mock animation.
+- The lightbox supports Escape to close and arrow keys to navigate.
+- Each page has a unique `<title>` and meta description; `privacy.html` is `noindex`.
+- Service area copy (Hamilton, Burlington, Ontario) appears in the footer for local SEO.

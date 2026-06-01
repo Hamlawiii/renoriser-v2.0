@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Get a Quote — Renoriser</title>
+  <meta name="description" content="Request a free, itemized renovation quote from Renoriser. Serving Hamilton &amp; Burlington — we'll get back to you within 24 hours." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" type="image/jpeg" href="images/ri-mark.jpeg" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17649734991"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} // eslint-disable-line
+    gtag('js', new Date());
+    gtag('config', 'AW-17649734991');
+  </script>
+</head>
+<body>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="Renoriser home">
+        <img class="brand-mark" src="images/ri-mark.jpeg" alt="Renoriser" />
+        <span class="brand-lockup"><span class="brand-name">Renoriser</span><span class="brand-sub">Construction &amp; Technology</span></span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Primary">
+        <a href="services.html">Services</a>
+        <a href="work.html">Our Work</a>
+        <a href="technology.html">Technology</a>
+        <a href="quote.html" class="btn btn-primary btn-small active">Get a Quote</a>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="nav">&#9776;</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-hero bp-grid">
+      <div class="container">
+        <span class="eyebrow">Get in touch</span>
+        <h1>Get Your Free Quote</h1>
+        <p>Tell us about your project and we'll respond within 24 hours with clear next steps — and an itemized estimate you can actually read.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container quote-grid">
+        <div class="quote-copy reveal">
+          <h2 id="quoteHeading">Let's talk about your project</h2>
+          <p>No pressure, no obligation. The more detail you share, the more accurate your estimate.</p>
+          <div class="contact-meta">
+            <a href="tel:+13654769000"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span><span><span class="l">Call</span><br />(365) 476-9000</span></a>
+            <a href="mailto:renoriser@outlook.com"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span><span><span class="l">Email</span><br />renoriser@outlook.com</span></a>
+            <div><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span><span class="l">Service area</span><br />Hamilton &amp; Burlington, ON</span></div>
+          </div>
+        </div>
+
+        <form class="contact-form reveal d1" id="contactForm" novalidate>
+          <label><span>Full name</span><input type="text" name="name" placeholder="Jane Doe" required /></label>
+          <label><span>Email</span><input type="email" name="email" placeholder="jane@example.com" required /></label>
+          <label><span>Phone</span><input type="tel" name="phone" placeholder="(905) 555-0123" /></label>
+          <label><span>Project type</span>
+            <select name="project" id="projectType">
+              <option value="">Select…</option>
+              <option>Kitchen</option>
+              <option>Bathroom</option>
+              <option>Basement</option>
+              <option>Flooring &amp; painting</option>
+              <option>RI early access</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label class="full"><span>Project details</span><textarea name="message" placeholder="Tell us about your project — rooms, timeline, anything you have in mind."></textarea></label>
+          <p class="form-consent">By submitting, you consent to Renoriser contacting you about your request. We never share your information. See our <a href="privacy.html">Privacy Policy</a>.</p>
+          <button type="submit" class="btn btn-primary btn-large">Request Quote <svg class="arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-brand">
+            <img class="brand-mark" src="images/ri-mark.jpeg" alt="Renoriser" />
+            <span class="brand-lockup"><span class="brand-name">Renoriser</span><span class="brand-sub">Construction &amp; Technology</span></span>
+          </div>
+          <p class="footer-blurb">A Hamilton &amp; Burlington renovation company building RI — the AI behind smarter, clearer home projects.</p>
+          <div class="footer-contact">
+            <a href="tel:+13654769000">(365) 476-9000</a>
+            <a href="mailto:renoriser@outlook.com">renoriser@outlook.com</a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <a href="index.html">Home</a>
+          <a href="services.html">Services</a>
+          <a href="work.html">Our Work</a>
+          <a href="technology.html">Technology</a>
+          <a href="quote.html">Get a Quote</a>
+        </div>
+        <div class="footer-col">
+          <h4>Service area</h4>
+          <p>Proudly serving Hamilton, Burlington, and the surrounding communities in Ontario with full-service renovations and seasonal maintenance.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="year"></span> Renoriser — Construction &amp; Technology. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · Hamilton · Burlington, ON</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
