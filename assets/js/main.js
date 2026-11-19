@@ -45,14 +45,14 @@
       if (bar) return;
       var off = getPref() === 'off';
       bar = document.createElement('div');
-      bar.className = 'ad-notice';
+      bar.className = 'rn-notice';
       bar.setAttribute('role', 'region');
       bar.setAttribute('aria-label', 'Advertising cookies');
       bar.innerHTML =
         '<p>We use a Google Ads cookie to measure our advertising, and Google may use it to show you our ads elsewhere. '
         + (off ? '<strong>Ad measurement is currently off.</strong> ' : '')
         + 'See our <a href="privacy.html#cookies">Privacy Policy</a>.</p>'
-        + '<div class="ad-notice__actions">'
+        + '<div class="rn-notice__actions">'
         + '<button type="button" class="btn btn-ghost btn-small" data-v="off">Turn off ad measurement</button>'
         + '<button type="button" class="btn btn-primary btn-small" data-v="on">' + (off ? 'Turn back on' : 'OK') + '</button>'
         + '</div>';
