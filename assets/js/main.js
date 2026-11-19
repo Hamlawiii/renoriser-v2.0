@@ -53,8 +53,11 @@
         + (off ? '<strong>Ad measurement is currently off.</strong> ' : '')
         + 'See our <a href="privacy.html#cookies">Privacy Policy</a>.</p>'
         + '<div class="rn-notice__actions">'
-        + '<button type="button" class="btn btn-ghost btn-small" data-v="off">Turn off ad measurement</button>'
-        + '<button type="button" class="btn btn-primary btn-small" data-v="on">' + (off ? 'Turn back on' : 'OK') + '</button>'
+        + (off
+          ? '<button type="button" class="btn btn-ghost btn-small" data-v="on">Turn back on</button>'
+            + '<button type="button" class="btn btn-primary btn-small" data-v="off">Keep it off</button>'
+          : '<button type="button" class="btn btn-ghost btn-small" data-v="off">Turn off ad measurement</button>'
+            + '<button type="button" class="btn btn-primary btn-small" data-v="on">OK</button>')
         + '</div>';
       bar.addEventListener('click', function (e) {
         var b = e.target.closest('button[data-v]');
