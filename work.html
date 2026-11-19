@@ -10,13 +10,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/styles.css" />
   <link rel="icon" type="image/jpeg" href="images/ri-mark.jpeg" />
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17649734991"></script>
+  <!-- Google Ads tag: loads unless the visitor turned off ad measurement (banner / footer "Ad preferences").
+       Keep the same in every page's <head>. For opt-in (e.g. Quebec), load only when the stored value is 'on'. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);} // eslint-disable-line
-    gtag('js', new Date());
-    gtag('config', 'AW-17649734991');
+    (function () {
+      var pref = null;
+      try { pref = localStorage.getItem('rn_ads'); } catch (e) {}
+      if (pref === 'off') return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17649734991';
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', 'AW-17649734991');
+    })();
   </script>
 </head>
 <body class="work-page">
@@ -77,7 +86,7 @@
           <p class="footer-blurb">A Hamilton &amp; Burlington renovation company building RI — the AI behind smarter, clearer home projects.</p>
           <div class="footer-contact">
             <a href="tel:+13654769000">(365) 476-9000</a>
-            <a href="mailto:renoriser@outlook.com">renoriser@outlook.com</a>
+            <a href="mailto:info@renoriser.ca">info@renoriser.ca</a>
           </div>
         </div>
         <div class="footer-col">
@@ -94,8 +103,8 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <span>© <span id="year"></span> Renoriser — Construction &amp; Technology. All rights reserved.</span>
-        <span><a href="privacy.html">Privacy Policy</a> · Hamilton · Burlington, ON</span>
+        <span>© <span id="year"></span> Renoriser Inc. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · <button type="button" class="link-btn" data-ad-prefs>Ad preferences</button> · Hamilton · Burlington, ON</span>
       </div>
     </div>
   </footer>

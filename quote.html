@@ -10,13 +10,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/styles.css" />
   <link rel="icon" type="image/jpeg" href="images/ri-mark.jpeg" />
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17649734991"></script>
+  <!-- Google Ads tag: loads unless the visitor turned off ad measurement (banner / footer "Ad preferences").
+       Keep the same in every page's <head>. For opt-in (e.g. Quebec), load only when the stored value is 'on'. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);} // eslint-disable-line
-    gtag('js', new Date());
-    gtag('config', 'AW-17649734991');
+    (function () {
+      var pref = null;
+      try { pref = localStorage.getItem('rn_ads'); } catch (e) {}
+      if (pref === 'off') return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-17649734991';
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', 'AW-17649734991');
+    })();
   </script>
 </head>
 <body>
@@ -52,7 +61,7 @@
           <p>No pressure, no obligation. The more detail you share, the more accurate your estimate.</p>
           <div class="contact-meta">
             <a href="tel:+13654769000"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span><span><span class="l">Call</span><br />(365) 476-9000</span></a>
-            <a href="mailto:renoriser@outlook.com"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span><span><span class="l">Email</span><br />renoriser@outlook.com</span></a>
+            <a href="mailto:info@renoriser.ca"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></span><span><span class="l">Email</span><br />info@renoriser.ca</span></a>
             <div><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span><span class="l">Service area</span><br />Hamilton &amp; Burlington, ON</span></div>
           </div>
         </div>
@@ -73,7 +82,7 @@
             </select>
           </label>
           <label class="full"><span>Project details</span><textarea name="message" placeholder="Tell us about your project — rooms, timeline, anything you have in mind."></textarea></label>
-          <p class="form-consent">By submitting, you consent to Renoriser contacting you about your request. We never share your information. See our <a href="privacy.html">Privacy Policy</a>.</p>
+          <p class="form-consent">By submitting, you agree that Renoriser Inc. may contact you about your request. We don't sell or rent your information; see our <a href="privacy.html">Privacy Policy</a>.</p>
           <button type="submit" class="btn btn-primary btn-large">Request Quote <svg class="arr" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
           <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
         </form>
@@ -92,7 +101,7 @@
           <p class="footer-blurb">A Hamilton &amp; Burlington renovation company building RI — the AI behind smarter, clearer home projects.</p>
           <div class="footer-contact">
             <a href="tel:+13654769000">(365) 476-9000</a>
-            <a href="mailto:renoriser@outlook.com">renoriser@outlook.com</a>
+            <a href="mailto:info@renoriser.ca">info@renoriser.ca</a>
           </div>
         </div>
         <div class="footer-col">
@@ -109,8 +118,8 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <span>© <span id="year"></span> Renoriser — Construction &amp; Technology. All rights reserved.</span>
-        <span><a href="privacy.html">Privacy Policy</a> · Hamilton · Burlington, ON</span>
+        <span>© <span id="year"></span> Renoriser Inc. All rights reserved.</span>
+        <span><a href="privacy.html">Privacy Policy</a> · <button type="button" class="link-btn" data-ad-prefs>Ad preferences</button> · Hamilton · Burlington, ON</span>
       </div>
     </div>
   </footer>

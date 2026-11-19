@@ -22,6 +22,51 @@
   /* ---- Footer year ---- */
   $$('#year').forEach(function (el) { el.textContent = new Date().getFullYear(); });
 
+  /* ---- Ad measurement notice (Google Ads tag) ----
+     Implied consent with an easy, lasting opt-out. Choice is stored in localStorage
+     ('rn_ads' = 'on' | 'off'); each page's <head> skips loading the tag when 'off'.
+     Footer "Ad preferences" reopens the notice. */
+  (function adNotice() {
+    var KEY = 'rn_ads';
+    function getPref() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+    function setPref(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+    var bar = null;
+
+    function close() { if (bar) { bar.remove(); bar = null; } }
+    function choose(v) {
+      setPref(v);
+      if (v === 'off' && typeof gtag === 'function') {
+        // Stop the tag already running on this page; later pages won't load it at all.
+        gtag('consent', 'update', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+      }
+      close();
+    }
+    function open() {
+      if (bar) return;
+      var off = getPref() === 'off';
+      bar = document.createElement('div');
+      bar.className = 'ad-notice';
+      bar.setAttribute('role', 'region');
+      bar.setAttribute('aria-label', 'Advertising cookies');
+      bar.innerHTML =
+        '<p>We use a Google Ads cookie to measure our advertising, and Google may use it to show you our ads elsewhere. '
+        + (off ? '<strong>Ad measurement is currently off.</strong> ' : '')
+        + 'See our <a href="privacy.html#cookies">Privacy Policy</a>.</p>'
+        + '<div class="ad-notice__actions">'
+        + '<button type="button" class="btn btn-ghost btn-small" data-v="off">Turn off ad measurement</button>'
+        + '<button type="button" class="btn btn-primary btn-small" data-v="on">' + (off ? 'Turn back on' : 'OK') + '</button>'
+        + '</div>';
+      bar.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-v]');
+        if (b) choose(b.getAttribute('data-v'));
+      });
+      document.body.appendChild(bar);
+    }
+
+    if (!getPref()) open();
+    $$('[data-ad-prefs]').forEach(function (b) { b.addEventListener('click', open); });
+  })();
+
   /* ---- Header shrink on scroll ---- */
   var header = $('.site-header');
   if (header) {
@@ -148,9 +193,14 @@
       at(9800, play);
     }
 
+    // The HTML carries the final total so no-JS readers (search engines, link previews)
+    // never see "$0". Reduced motion: show the finished state with no count-up.
     if (reduce) {
-      [0, 1, 2, 3, 4].forEach(showStep);
-    } else if ('IntersectionObserver' in window) {
+      specSteps.concat(chatSteps).forEach(function (el) { el.classList.add('show'); });
+      return;
+    }
+    reset();
+    if ('IntersectionObserver' in window) {
       var mio = new IntersectionObserver(function (entries) {
         entries.forEach(function (en) { if (en.isIntersecting && !running) { running = true; play(); } });
       }, { threshold: 0.3 });
@@ -255,7 +305,7 @@
           }
         })
         .catch(function () {
-          if (status) { status.textContent = 'Something went wrong. Please email us directly at renoriser@outlook.com'; status.className = 'form-status error'; }
+          if (status) { status.textContent = 'Something went wrong. Please email us directly at info@renoriser.ca'; status.className = 'form-status error'; }
         })
         .then(function () {
           submitBtn.disabled = false;
