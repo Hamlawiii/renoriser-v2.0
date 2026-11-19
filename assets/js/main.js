@@ -321,9 +321,14 @@
   var lbState = { items: [], idx: 0 };
 
   function isVideoSrc(src) { return /\.(mp4|webm|ogg)$/i.test(src); }
-  function mediaTag(src, label) {
+  function escAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  // Descriptive alt text from the manifest, e.g. "Kitchen & flooring in Burlington (after)".
+  function altFor(p, stage) {
+    return (p.type || 'Renovation') + (p.location ? ' in ' + p.location : '') + ' (' + stage + ')';
+  }
+  function mediaTag(src, alt) {
     if (isVideoSrc(src)) return '<video src="' + src + '" muted playsinline loop preload="metadata"></video>';
-    return '<img src="' + src + '" alt="' + label + ' photo" loading="lazy">';
+    return '<img src="' + src + '" alt="' + escAttr(alt) + '" loading="lazy">';
   }
 
   (function projectGallery() {
@@ -345,13 +350,13 @@
             ? '<button class="proj-before-toggle" data-project="' + pi + '" aria-expanded="false">See before (' + before.length + ')</button>'
               + '<div class="proj-before" hidden>'
               + before.map(function (b, bi) {
-                  return '<button class="proj-thumb" data-project="' + pi + '" data-index="' + (after.length + bi) + '" aria-label="View before photo">' + mediaTag(b, 'Before') + '</button>';
+                  return '<button class="proj-thumb" data-project="' + pi + '" data-index="' + (after.length + bi) + '" aria-label="View before photo">' + mediaTag(b, altFor(p, 'before')) + '</button>';
                 }).join('')
               + '</div>'
             : '';
           return '<article class="proj-card">'
             + '<button class="proj-hero" data-project="' + pi + '" data-index="0" aria-label="Open ' + label + ' photos">'
-            + mediaTag(hero, 'After')
+            + mediaTag(hero, altFor(p, after.length ? 'after' : 'before'))
             + '<span class="proj-stage after">After</span>'
             + (extra > 0 ? '<span class="proj-count">+' + extra + ' more</span>' : '')
             + '</button>'
@@ -366,10 +371,16 @@
         var listFor = function (pi) {
           var p = projects[pi]; return (p.after || []).concat(p.before || []);
         };
+        var altsFor = function (pi) {
+          var p = projects[pi];
+          return (p.after || []).map(function () { return altFor(p, 'after'); })
+            .concat((p.before || []).map(function () { return altFor(p, 'before'); }));
+        };
 
         $$('.proj-hero, .proj-thumb', grid).forEach(function (btn) {
           btn.addEventListener('click', function () {
-            openLightbox(listFor(+btn.getAttribute('data-project')), +btn.getAttribute('data-index'));
+            var pi = +btn.getAttribute('data-project');
+            openLightbox(listFor(pi), +btn.getAttribute('data-index'), altsFor(pi));
           });
         });
 
@@ -401,16 +412,17 @@
       content.appendChild(v);
     } else {
       var wrap = document.createElement('div'); wrap.className = 'lb-image';
-      var img = document.createElement('img'); img.src = src; img.alt = 'Project photo';
+      var img = document.createElement('img'); img.src = src; img.alt = (lbState.alts && lbState.alts[lbState.idx]) || 'Project photo';
       wrap.appendChild(img); content.appendChild(wrap);
     }
     var multi = lbState.items.length > 1;
     ['#lbPrev', '#lbNext'].forEach(function (s) { var el = $(s); if (el) el.style.display = multi ? '' : 'none'; });
   }
-  function openLightbox(items, idx) {
+  function openLightbox(items, idx, alts) {
     var lb = $('#lightbox');
     if (!lb) return;
     lbState.items = items || [];
+    lbState.alts = alts || [];
     lbState.idx = idx || 0;
     renderLb();
     lb.setAttribute('aria-hidden', 'false');
